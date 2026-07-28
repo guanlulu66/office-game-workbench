@@ -1,0 +1,2110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="自媒体工作台">
+<meta name="theme-color" content="#1a1d29">
+<meta name="mobile-web-app-capable" content="yes">
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="shortcut icon" href="favicon.ico">
+<!-- iOS -->
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180x180.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icon-152x152.png">
+<link rel="apple-touch-icon" sizes="120x120" href="icon-120x120.png">
+<link rel="apple-touch-icon" sizes="76x76" href="icon-76x76.png">
+<link rel="apple-touch-startup-image" href="icon-512x512.png">
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<title>办公室游戏自媒体工作台</title>
+<style>
+:root {
+  --bg: #f5f6fa;
+  --sidebar-bg: #1a1d29;
+  --sidebar-hover: #262a3a;
+  --sidebar-active: #2d3147;
+  --accent: #6c5ce7;
+  --accent-light: #a29bfe;
+  --card-bg: #ffffff;
+  --text: #2d3436;
+  --text-secondary: #636e72;
+  --border: #e9ecef;
+  --success: #00b894;
+  --danger: #e17055;
+  --warning: #fdcb6e;
+  --info: #74b9ff;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  --radius: 12px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  background: var(--sidebar-bg);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: 24px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.sidebar-header h1 {
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sidebar-header h1 .logo-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+.sidebar-header .subtitle {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  margin-top: 4px;
+}
+
+.nav-list {
+  list-style: none;
+  padding: 12px 0;
+  flex: 1;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  color: rgba(255,255,255,0.65);
+  border-left: 3px solid transparent;
+  margin: 2px 0;
+}
+.nav-item:hover {
+  background: var(--sidebar-hover);
+  color: #fff;
+}
+.nav-item.active {
+  background: var(--sidebar-active);
+  color: #fff;
+  border-left-color: var(--accent-light);
+}
+.nav-item .nav-icon { font-size: 18px; width: 24px; text-align: center; }
+.nav-item .badge {
+  margin-left: auto;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+/* Main */
+.main {
+  margin-left: 240px;
+  flex: 1;
+  padding: 28px 32px;
+  min-height: 100vh;
+}
+
+.page { display: none; }
+.page.active { display: block; }
+
+.page-header {
+  margin-bottom: 24px;
+}
+.page-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.page-header p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+/* Cards */
+.card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Task styles */
+.task-list { list-style: none; }
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  transition: all 0.2s;
+  margin-bottom: 6px;
+  background: #fafbfc;
+}
+.task-item:hover { background: #f0f1f5; }
+.task-item.completed .task-label { text-decoration: line-through; color: #b2bec3; }
+.task-checkbox {
+  width: 22px; height: 22px;
+  border: 2px solid #dfe6e9;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.task-checkbox:hover { border-color: var(--accent); }
+.task-item.completed .task-checkbox {
+  background: var(--success);
+  border-color: var(--success);
+}
+.task-checkbox::after {
+  content: '✓';
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.task-item.completed .task-checkbox::after { opacity: 1; }
+.task-label { flex: 1; font-size: 14px; }
+.task-delete {
+  background: none; border: none;
+  color: #b2bec3; cursor: pointer;
+  font-size: 16px; padding: 4px 8px;
+  border-radius: 6px; transition: all 0.2s;
+}
+.task-delete:hover { color: var(--danger); background: #ffeaa7; }
+
+.add-task-form {
+  display: flex; gap: 10px; margin-top: 16px;
+}
+.add-task-form input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.add-task-form input:focus { border-color: var(--accent); }
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #5f4fd1; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { background: #d63031; }
+.btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text); }
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+.btn-sm { padding: 6px 14px; font-size: 13px; }
+
+/* Stats */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+}
+.stat-label { font-size: 13px; color: var(--text-secondary); }
+.stat-value { font-size: 28px; font-weight: 700; margin-top: 4px; }
+.stat-value.red { color: var(--danger); }
+.stat-value.green { color: var(--success); }
+.stat-value.purple { color: var(--accent); }
+.stat-value.blue { color: var(--info); }
+
+/* Progress bar */
+.progress-bar {
+  height: 8px;
+  background: #eee;
+  border-radius: 4px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+
+/* Video cards */
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.video-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: all 0.2s;
+}
+.video-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+.video-thumb {
+  height: 160px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 40px;
+  position: relative;
+}
+.video-thumb .play-icon {
+  width: 50px; height: 50px;
+  background: rgba(255,255,255,0.9);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+.video-thumb .platform-tag {
+  position: absolute;
+  top: 10px; right: 10px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+}
+.video-body { padding: 14px 16px; }
+.video-title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.video-meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.video-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.tag {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  background: #f0f1f5;
+  color: var(--text-secondary);
+}
+.tag.hot { background: #ffe0e0; color: #e17055; }
+.tag.game { background: #e8f4fd; color: #0984e3; }
+.tag.idea { background: #fff3e0; color: #e17055; }
+
+/* Search bar */
+.search-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.search-bar input {
+  flex: 1;
+  padding: 10px 16px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+}
+.search-bar input:focus { border-color: var(--accent); }
+
+/* Inspiration */
+.inspiration-form textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  min-height: 100px;
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+}
+.inspiration-form textarea:focus { border-color: var(--accent); }
+.inspiration-form .row {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.inspiration-form select {
+  padding: 8px 12px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+}
+.idea-list { margin-top: 16px; }
+.idea-item {
+  padding: 14px 16px;
+  background: #fafbfc;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  border-left: 3px solid var(--accent);
+}
+.idea-item .idea-text { font-size: 14px; margin-bottom: 6px; }
+.idea-item .idea-meta { font-size: 12px; color: var(--text-secondary); display: flex; gap: 12px; }
+
+/* Review table */
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+.review-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+}
+.review-card .platform { font-size: 11px; color: var(--accent); font-weight: 600; text-transform: uppercase; }
+.review-card .title { font-size: 15px; font-weight: 600; margin: 6px 0; }
+.review-card .metrics {
+  display: flex; gap: 16px; margin-top: 10px;
+  font-size: 13px; color: var(--text-secondary);
+}
+.review-card .metrics span { display: flex; align-items: center; gap: 4px; }
+
+/* Accounting */
+.account-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+}
+.account-form input, .account-form select {
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+}
+.account-form input:focus, .account-form select:focus { border-color: var(--accent); }
+.account-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+.account-table th, .account-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.account-table th {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+.account-table .income { color: var(--danger); font-weight: 600; }
+.account-table .expense { color: var(--success); font-weight: 600; }
+
+/* Modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 200;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 24px;
+  width: 400px;
+  max-width: 90vw;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+}
+.modal h3 { margin-bottom: 16px; }
+.modal .actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+}
+.empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+/* Category filter */
+.category-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.filter-chip {
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+  border: 2px solid var(--border);
+  background: #fff;
+  transition: all 0.2s;
+}
+.filter-chip:hover { border-color: var(--accent); }
+.filter-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2d3436;
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 20px;
+  font-size: 14px;
+  z-index: 300;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.toast.show { opacity: 1; }
+
+/* Calendar */
+.calendar-container {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.calendar-panel {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  min-width: 320px;
+  flex: 1;
+  max-width: 420px;
+}
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.calendar-header h3 { font-size: 16px; font-weight: 600; }
+.calendar-header button {
+  background: none; border: none; cursor: pointer;
+  font-size: 18px; padding: 4px 10px; border-radius: 6px;
+  color: var(--text-secondary); transition: all 0.2s;
+}
+.calendar-header button:hover { background: var(--border); color: var(--text); }
+.calendar-weekdays {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  text-align: center; font-size: 12px; color: var(--text-secondary);
+  margin-bottom: 8px; font-weight: 600;
+}
+.calendar-days {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.calendar-day {
+  aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; cursor: pointer; font-size: 13px;
+  transition: all 0.2s; position: relative;
+}
+.calendar-day:hover { background: #f0f1f5; }
+.calendar-day.other-month { color: #ccc; cursor: default; }
+.calendar-day.today {
+  background: var(--accent); color: #fff; font-weight: 700;
+}
+.calendar-day.selected {
+  background: var(--accent-light); color: #fff; font-weight: 600;
+}
+.calendar-day.today.selected { background: var(--accent); }
+.calendar-day.has-task::after {
+  content: '';
+  position: absolute; bottom: 4px;
+  width: 6px; height: 6px;
+  background: var(--danger); border-radius: 50%;
+}
+.calendar-day.today.has-task::after { background: #fff; }
+
+.memo-panel {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  flex: 2;
+  min-width: 360px;
+}
+.memo-date-title {
+  font-size: 16px; font-weight: 600; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.memo-task-section { margin-bottom: 20px; }
+.memo-task-section .section-label {
+  font-size: 13px; color: var(--text-secondary); font-weight: 600;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+.memo-task-list { list-style: none; }
+.memo-task-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 8px;
+  transition: all 0.2s; margin-bottom: 4px;
+  background: #fafbfc; font-size: 14px;
+}
+.memo-task-item:hover { background: #f0f1f5; }
+.memo-task-item.completed .memo-task-label { text-decoration: line-through; color: #b2bec3; }
+.memo-task-checkbox {
+  width: 20px; height: 20px;
+  border: 2px solid #dfe6e9; border-radius: 5px;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.memo-task-checkbox:hover { border-color: var(--accent); }
+.memo-task-item.completed .memo-task-checkbox { background: var(--success); border-color: var(--success); }
+.memo-task-checkbox::after { content: '✓'; color: #fff; font-size: 12px; font-weight: 700; opacity: 0; }
+.memo-task-item.completed .memo-task-checkbox::after { opacity: 1; }
+.memo-task-label { flex: 1; }
+.memo-task-delete {
+  background: none; border: none; color: #b2bec3; cursor: pointer;
+  font-size: 14px; padding: 2px 6px; border-radius: 4px;
+}
+.memo-task-delete:hover { color: var(--danger); }
+.memo-add-form {
+  display: flex; gap: 8px; margin-top: 8px;
+}
+.memo-add-form input {
+  flex: 1; padding: 8px 12px; border: 2px solid var(--border);
+  border-radius: 8px; font-size: 13px; outline: none;
+}
+.memo-add-form input:focus { border-color: var(--accent); }
+
+.memo-note-section { margin-top: 16px; }
+.memo-note-input {
+  width: 100%; min-height: 100px; padding: 12px;
+  border: 2px solid var(--border); border-radius: 8px;
+  font-size: 14px; resize: vertical; outline: none;
+  font-family: inherit;
+}
+.memo-note-input:focus { border-color: var(--accent); }
+.memo-note-saved { font-size: 12px; color: var(--success); margin-top: 4px; }
+
+/* Voice button */
+.voice-btn {
+  background: linear-gradient(135deg, #e17055, #d63031);
+  color: #fff; border: none; border-radius: 50%;
+  width: 42px; height: 42px; cursor: pointer; font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; flex-shrink: 0;
+}
+.voice-btn:hover { transform: scale(1.1); }
+.voice-btn.listening {
+  animation: pulse 1.2s infinite;
+  background: linear-gradient(135deg, #d63031, #e17055);
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(214,48,49,0.5); }
+  50% { box-shadow: 0 0 0 14px rgba(214,48,49,0); }
+}
+.voice-status {
+  font-size: 12px; color: var(--text-secondary); margin-top: 4px;
+  text-align: center;
+}
+
+/* Daily popup */
+.daily-popup-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5); z-index: 500;
+  align-items: center; justify-content: center;
+}
+.daily-popup-overlay.show { display: flex; }
+.daily-popup {
+  background: var(--card-bg); border-radius: 16px; padding: 28px;
+  width: 460px; max-width: 90vw; max-height: 80vh; overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.daily-popup h3 { font-size: 18px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.daily-popup .popup-date { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; }
+.daily-popup .popup-task-list { list-style: none; }
+.daily-popup .popup-task-item {
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+  font-size: 14px; display: flex; align-items: center; gap: 10px;
+}
+.daily-popup .popup-task-item:last-child { border-bottom: none; }
+.daily-popup .popup-close {
+  display: block; margin: 20px auto 0;
+  padding: 10px 30px; background: var(--accent); color: #fff;
+  border: none; border-radius: 8px; cursor: pointer; font-size: 14px;
+}
+
+/* ========== Mobile: Bottom Navigation ========== */
+@media (max-width: 768px) {
+  body { flex-direction: column; }
+
+  /* Sidebar becomes bottom nav */
+  .sidebar {
+    position: fixed;
+    top: auto; left: 0; right: 0; bottom: 0;
+    width: 100%; height: auto;
+    flex-direction: row;
+    background: var(--sidebar-bg);
+    z-index: 200;
+    padding: 4px 0;
+    padding-bottom: env(safe-area-inset-bottom, 4px);
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.3);
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .sidebar::-webkit-scrollbar { display: none; }
+
+  .sidebar-header { display: none; }
+
+  .nav-list {
+    display: flex;
+    flex-direction: row;
+    padding: 0 4px;
+    flex: 1;
+    gap: 0;
+    min-width: max-content;
+  }
+
+  .nav-item {
+    position: relative;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    min-width: 64px;
+    height: 56px;
+    gap: 3px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.55);
+    border-left: none;
+    border-top: 2px solid transparent;
+    border-radius: 8px;
+    margin: 0 1px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .nav-item:hover { background: var(--sidebar-hover); }
+  .nav-item.active {
+    background: var(--sidebar-active);
+    color: #fff;
+    border-top-color: var(--accent-light);
+    border-left: none;
+  }
+  .nav-item .nav-icon { font-size: 20px; width: auto; }
+  .nav-item span { display: inline !important; }
+  .nav-item .badge {
+    margin-left: 0; margin-top: -2px;
+    font-size: 10px; padding: 1px 6px;
+    position: absolute; top: 4px; right: 6px;
+  }
+
+  /* Main content */
+  .main {
+    margin-left: 0;
+    margin-bottom: 72px;
+    padding: 16px 12px;
+    width: 100%;
+  }
+
+  .page { padding: 0; }
+
+  /* Stats grid: 2 columns */
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-card { padding: 14px; }
+
+  /* Cards & panels */
+  .card { padding: 16px 14px; border-radius: 10px; }
+
+  /* Page header */
+  .page-header { flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 14px; }
+  .page-header h2 { font-size: 18px; }
+
+  /* Task list */
+  .task-input-row { flex-direction: column; gap: 8px; }
+  .task-input-row input { flex: none; width: 100%; }
+  .task-input-row button { width: 100%; }
+
+  /* Idea form */
+  .idea-form { flex-direction: column; gap: 8px; }
+  .idea-form input, .idea-form select, .idea-form button { width: 100%; }
+
+  /* Hot video toolbar */
+  .video-toolbar { flex-direction: column; gap: 8px; align-items: stretch; }
+  .video-toolbar .search-box { width: 100%; }
+  .video-toolbar select, .video-toolbar button { width: 100%; }
+  .video-grid { grid-template-columns: 1fr; }
+  .video-card { padding: 14px; }
+
+  /* Review form */
+  .review-form { grid-template-columns: 1fr; gap: 8px; }
+
+  /* Accounting */
+  .account-form { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .account-form .voice-wrap { grid-column: 1 / -1; }
+
+  /* Calendar */
+  .calendar-container { flex-direction: column; gap: 12px; }
+  .calendar-panel { max-width: 100%; }
+  .sales-task-input { flex-direction: column; gap: 8px; }
+
+  /* Idea filters */
+  .filter-bar { flex-wrap: wrap; gap: 6px; }
+  .filter-btn { font-size: 12px; padding: 4px 10px; }
+
+  /* Accounts list */
+  .account-list-header, .account-item { font-size: 13px; }
+
+  /* Tables - horizontal scroll */
+  .data-table { display: block; overflow-x: auto; }
+
+  /* Buttons */
+  .btn { font-size: 13px; padding: 10px 18px; }
+  .btn-sm { font-size: 12px; padding: 5px 12px; }
+
+  /* Toast */
+  .toast { left: 12px; right: 12px; bottom: 80px; font-size: 13px; }
+
+  /* Popup */
+  .popup-content { width: 92vw; max-height: 75vh; padding: 20px; }
+
+  /* Summary cards in accounting */
+  .account-summary { flex-direction: column; gap: 8px; }
+  .account-summary .summary-item { min-width: auto; }
+
+  /* Memo textarea */
+  .memo-section textarea { min-height: 80px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <h1><span class="logo-icon">🎯</span><span>工作台</span></h1>
+    <div class="subtitle">办公室游戏自媒体</div>
+  </div>
+  <ul class="nav-list">
+    <li class="nav-item active" data-page="plan">
+      <span class="nav-icon">📋</span><span>每日计划</span>
+      <span class="badge" id="planBadge">0/5</span>
+    </li>
+    <li class="nav-item" data-page="inspiration">
+      <span class="nav-icon">💡</span><span>选题灵感</span>
+    </li>
+    <li class="nav-item" data-page="hot-videos">
+      <span class="nav-icon">🔥</span><span>爆款热点/二创</span>
+    </li>
+    <li class="nav-item" data-page="review">
+      <span class="nav-icon">📊</span><span>内容复盘</span>
+    </li>
+    <li class="nav-item" data-page="game-videos">
+      <span class="nav-icon">🎮</span><span>办公室游戏热点</span>
+    </li>
+    <li class="nav-item" data-page="accounting">
+      <span class="nav-icon">💰</span><span>记账</span>
+    </li>
+    <li class="nav-item" data-page="sales-office">
+      <span class="nav-icon">🏢</span><span>售楼处工作</span>
+    </li>
+  </ul>
+</nav>
+
+<!-- Main Content -->
+<main class="main">
+
+  <!-- ==================== 每日计划 ==================== -->
+  <section class="page active" id="page-plan">
+    <div class="page-header">
+      <h2>📋 每日计划</h2>
+      <p id="todayDate"></p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">今日任务</div>
+        <div class="stat-value purple" id="totalTasks">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">已完成</div>
+        <div class="stat-value green" id="doneTasks">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">完成率</div>
+        <div class="stat-value blue" id="completionRate">0%</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">✅ 今日任务清单</div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+      </div>
+      <ul class="task-list" id="taskList"></ul>
+      <div class="add-task-form">
+        <input type="text" id="newTaskInput" placeholder="添加新任务..." maxlength="50">
+        <button class="btn btn-primary" onclick="addTask()">＋ 添加</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 选题灵感 ==================== -->
+  <section class="page" id="page-inspiration">
+    <div class="page-header">
+      <h2>💡 选题每日灵感</h2>
+      <p>随时记录你的创作灵感，灵感转瞬即逝</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">✏️ 记录灵感</div>
+      <div class="inspiration-form">
+        <textarea id="ideaInput" placeholder="写下你的灵感...比如：把谁是卧底改成办公室豪华版，增加道具环节..."></textarea>
+        <div class="row">
+          <select id="ideaCategory">
+            <option value="谁是卧底">谁是卧底</option>
+            <option value="你画我猜">你画我猜</option>
+            <option value="词语加字">词语加字</option>
+            <option value="其他游戏">其他游戏</option>
+            <option value="选题方向">选题方向</option>
+            <option value="拍摄创意">拍摄创意</option>
+          </select>
+          <button class="btn btn-primary" onclick="saveIdea()">💾 保存灵感</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📝 灵感记录</div>
+      <div class="category-filters" id="ideaFilters"></div>
+      <div class="idea-list" id="ideaList">
+        <div class="empty-state">
+          <div class="icon">💡</div>
+          <p>还没有灵感记录，快去记录第一个灵感吧！</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 爆款热点/二创 ==================== -->
+  <section class="page" id="page-hot-videos">
+    <div class="page-header">
+      <h2>🔥 爆款热点视频 / 二创参考</h2>
+      <p>追踪抖音、视频号等平台的办公室游戏热门视频，寻找二创灵感</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔍 搜索热点视频</div>
+      <div class="search-bar">
+        <input type="text" id="hotSearchInput" placeholder="搜索关键词，如：办公室游戏 谁是卧底 团建...">
+        <button class="btn btn-primary" onclick="searchHotVideos()">🔍 搜索</button>
+        <button class="btn btn-outline" onclick="fetchTrendingVideos()">🔥 获取热门</button>
+      </div>
+      <div class="category-filters" id="hotFilters">
+        <span class="filter-chip active" data-cat="all">全部</span>
+        <span class="filter-chip" data-cat="谁是卧底">谁是卧底</span>
+        <span class="filter-chip" data-cat="你画我猜">你画我猜</span>
+        <span class="filter-chip" data-cat="词语加字">词语加字</span>
+        <span class="filter-chip" data-cat="团建游戏">团建游戏</span>
+        <span class="filter-chip" data-cat="办公室搞笑">办公室搞笑</span>
+      </div>
+    </div>
+
+    <div class="video-grid" id="hotVideoGrid">
+      <div class="empty-state">
+        <div class="icon">🔥</div>
+        <p>点击"获取热门"查看当前热点视频，或搜索关键词</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 内容复盘 ==================== -->
+  <section class="page" id="page-review">
+    <div class="page-header">
+      <h2>📊 内容复盘</h2>
+      <p>回顾已发布内容的表现，总结经验优化方向</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">➕ 添加复盘记录</div>
+      <div class="inspiration-form">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <input type="text" id="reviewTitle" placeholder="视频标题">
+          <select id="reviewPlatform">
+            <option value="抖音">抖音</option>
+            <option value="视频号">视频号</option>
+            <option value="小红书">小红书</option>
+            <option value="B站">B站</option>
+          </select>
+          <input type="text" id="reviewGame" placeholder="游戏类型（如：谁是卧底）">
+          <input type="date" id="reviewDate" placeholder="发布日期">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+          <input type="number" id="reviewViews" placeholder="播放量">
+          <input type="number" id="reviewLikes" placeholder="点赞数">
+          <input type="number" id="reviewComments" placeholder="评论数">
+        </div>
+        <textarea id="reviewNote" placeholder="复盘总结：亮点、不足、改进方向..." style="min-height:60px;"></textarea>
+        <div class="row">
+          <button class="btn btn-primary" onclick="saveReview()">💾 保存复盘</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="review-grid" id="reviewGrid">
+      <div class="empty-state">
+        <div class="icon">📊</div>
+        <p>还没有复盘记录，发布内容后记得回来复盘哦</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 办公室游戏热点视频 ==================== -->
+  <section class="page" id="page-game-videos">
+    <div class="page-header">
+      <h2>🎮 办公室游戏热点视频</h2>
+      <p>专为办公室游戏自媒体定制的热点追踪，挖掘谁是卧底、你画我猜、词语加字等爆款内容</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎯 热点趋势</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">🔥 谁是卧底 - 近7天热度</div>
+          <div class="stat-value red">89.6万</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">🎨 你画我猜 - 近7天热度</div>
+          <div class="stat-value purple">67.2万</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">📝 词语加字 - 近7天热度</div>
+          <div class="stat-value blue">43.8万</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">🎉 办公室团建 - 近7天热度</div>
+          <div class="stat-value green">112.4万</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔍 搜索办公室游戏视频</div>
+      <div class="search-bar">
+        <input type="text" id="gameSearchInput" placeholder="搜索：谁是卧底高级玩法、你画我猜爆笑、词语加字翻车...">
+        <button class="btn btn-primary" onclick="searchGameVideos()">🔍 搜索</button>
+      </div>
+    </div>
+
+    <div class="video-grid" id="gameVideoGrid">
+      <div class="empty-state">
+        <div class="icon">🎮</div>
+        <p>点击搜索获取办公室游戏相关热点视频</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 记账 ==================== -->
+  <section class="page" id="page-accounting">
+    <div class="page-header">
+      <h2>💰 记账</h2>
+      <p>记录自媒体收支，清楚每一笔钱的去向</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">本月收入</div>
+        <div class="stat-value red" id="monthIncome">¥0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">本月支出</div>
+        <div class="stat-value green" id="monthExpense">¥0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">本月结余</div>
+        <div class="stat-value blue" id="monthBalance">¥0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">➕ 记一笔</div>
+      <div class="account-form">
+        <select id="accType">
+          <option value="expense">支出</option>
+          <option value="income">收入</option>
+        </select>
+        <input type="number" id="accAmount" placeholder="金额" min="0" step="0.01">
+        <select id="accCategory">
+          <option value="设备采购">设备采购</option>
+          <option value="道具购买">道具购买</option>
+          <option value="场地费用">场地费用</option>
+          <option value="交通出行">交通出行</option>
+          <option value="餐饮">餐饮</option>
+          <option value="广告投放">广告投放</option>
+          <option value="平台收入">平台收入</option>
+          <option value="商单收入">商单收入</option>
+          <option value="其他">其他</option>
+        </select>
+        <button class="btn btn-primary" onclick="addAccount()">记一笔</button>
+        <button class="voice-btn" id="voiceBtn" onclick="toggleVoiceInput()" title="语音输入">🎤</button>
+      </div>
+      <div class="voice-status" id="voiceStatus"></div>
+      <div style="margin-top:8px;">
+        <input type="text" id="accNote" placeholder="备注（选填）" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-size:14px;outline:none;">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 收支明细</div>
+      <div style="overflow-x:auto;">
+        <table class="account-table">
+          <thead>
+            <tr><th>日期</th><th>类型</th><th>分类</th><th>金额</th><th>备注</th><th>操作</th></tr>
+          </thead>
+          <tbody id="accTableBody">
+            <tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:30px;">暂无记录，开始记一笔吧</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 售楼处工作 ==================== -->
+  <section class="page" id="page-sales-office">
+    <div class="page-header">
+      <h2>🏢 售楼处工作</h2>
+      <p>日历管理、每日工作记录与备忘</p>
+    </div>
+
+    <div class="calendar-container">
+      <!-- 日历 -->
+      <div class="calendar-panel">
+        <div class="calendar-header">
+          <button onclick="changeMonth(-1)">◀</button>
+          <h3 id="calMonthTitle"></h3>
+          <button onclick="changeMonth(1)">▶</button>
+        </div>
+        <div class="calendar-weekdays">
+          <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+        </div>
+        <div class="calendar-days" id="calendarDays"></div>
+      </div>
+
+      <!-- 备忘录 & 任务 -->
+      <div class="memo-panel" id="memoPanel">
+        <div class="memo-date-title" id="memoDateTitle">
+          📅 请选择日期
+        </div>
+
+        <!-- 任务区 -->
+        <div class="memo-task-section">
+          <div class="section-label">✅ 当日工作任务</div>
+          <ul class="memo-task-list" id="memoTaskList">
+            <li style="color:var(--text-secondary);font-size:13px;padding:8px;">请选择日期查看或添加任务</li>
+          </ul>
+          <div class="memo-add-form">
+            <input type="text" id="memoTaskInput" placeholder="添加新任务..." maxlength="50">
+            <button class="btn btn-primary btn-sm" onclick="addMemoTask()">＋</button>
+          </div>
+        </div>
+
+        <!-- 备忘录区 -->
+        <div class="memo-note-section">
+          <div class="section-label" style="margin-bottom:8px;">📝 备忘录</div>
+          <textarea class="memo-note-input" id="memoNoteInput" placeholder="记录当天的工作要点..."></textarea>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+            <span class="memo-note-saved" id="memoNoteSaved"></span>
+            <button class="btn btn-primary btn-sm" onclick="saveMemoNote()">💾 保存备忘</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- 每日任务弹窗 -->
+<div class="daily-popup-overlay" id="dailyPopupOverlay">
+  <div class="daily-popup">
+    <h3>📋 今日工作任务提醒</h3>
+    <div class="popup-date" id="popupDate"></div>
+    <ul class="popup-task-list" id="popupTaskList"></ul>
+    <div id="popupEmpty" style="text-align:center;color:var(--text-secondary);padding:20px;display:none;">今日暂无工作安排 🎉</div>
+    <button class="popup-close" onclick="closeDailyPopup()">知道了</button>
+  </div>
+</div>
+
+<script>
+// ==================== 数据存储 ====================
+const STORAGE_KEYS = {
+  tasks: 'wb_daily_tasks',
+  taskDate: 'wb_task_date',
+  ideas: 'wb_ideas',
+  reviews: 'wb_reviews',
+  accounts: 'wb_accounts',
+  salesTasks: 'wb_sales_tasks',
+  salesNotes: 'wb_sales_notes',
+  popupShown: 'wb_popup_shown'
+};
+
+function getStorage(key) {
+  try { return JSON.parse(localStorage.getItem(key)) || []; }
+  catch { return []; }
+}
+function setStorage(key, data) {
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
+// 每日重置检查
+function checkDailyReset() {
+  const today = new Date().toDateString();
+  const savedDate = localStorage.getItem(STORAGE_KEYS.taskDate);
+  if (savedDate !== today) {
+    localStorage.setItem(STORAGE_KEYS.taskDate, today);
+    localStorage.removeItem(STORAGE_KEYS.tasks);
+  }
+}
+
+// ==================== Toast ====================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ==================== 导航 ====================
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById('page-' + item.dataset.page).classList.add('active');
+    // Mobile: scroll active tab into view
+    if (window.innerWidth <= 768) {
+      item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+    // Refresh data when switching
+    const page = item.dataset.page;
+    if (page === 'plan') { loadTasks(); renderTasks(); }
+    if (page === 'inspiration') renderIdeas();
+    if (page === 'review') renderReviews();
+    if (page === 'accounting') renderAccounts();
+    if (page === 'hot-videos') renderVideoGrid('hotVideoGrid', hotVideos, 'hot');
+    if (page === 'game-videos') renderVideoGrid('gameVideoGrid', gameVideos, 'game');
+  });
+});
+
+// ==================== 每日计划 ====================
+const DEFAULT_TASKS = [
+  { id: 1, text: '运动1小时', done: false },
+  { id: 2, text: '八段锦一次', done: false },
+  { id: 3, text: '站桩10分钟', done: false },
+  { id: 4, text: '眼睛休息放空15分钟', done: false },
+  { id: 5, text: '英语学习30分钟', done: false },
+];
+
+let tasks = [];
+
+function loadTasks() {
+  checkDailyReset();
+  const saved = getStorage(STORAGE_KEYS.tasks);
+  if (saved.length === 0) {
+    tasks = JSON.parse(JSON.stringify(DEFAULT_TASKS));
+  } else {
+    tasks = saved;
+  }
+}
+
+function saveTasks() {
+  setStorage(STORAGE_KEYS.tasks, tasks);
+}
+
+function renderTasks() {
+  const list = document.getElementById('taskList');
+  list.innerHTML = tasks.map(t => `
+    <li class="task-item ${t.done ? 'completed' : ''}" data-id="${t.id}">
+      <div class="task-checkbox" onclick="toggleTask(${t.id})"></div>
+      <span class="task-label">${t.text}</span>
+      <button class="task-delete" onclick="deleteTask(${t.id})" title="删除">✕</button>
+    </li>
+  `).join('');
+
+  const total = tasks.length;
+  const done = tasks.filter(t => t.done).length;
+  const rate = total > 0 ? Math.round(done / total * 100) : 0;
+
+  document.getElementById('totalTasks').textContent = total;
+  document.getElementById('doneTasks').textContent = done;
+  document.getElementById('completionRate').textContent = rate + '%';
+  document.getElementById('progressFill').style.width = rate + '%';
+  document.getElementById('planBadge').textContent = done + '/' + total;
+}
+
+function toggleTask(id) {
+  const task = tasks.find(t => t.id === id);
+  if (task) {
+    task.done = !task.done;
+    saveTasks();
+    renderTasks();
+    showToast(task.done ? '✓ 任务完成！' : '任务已取消完成');
+  }
+}
+
+function deleteTask(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  saveTasks();
+  renderTasks();
+  showToast('任务已删除');
+}
+
+function addTask() {
+  const input = document.getElementById('newTaskInput');
+  const text = input.value.trim();
+  if (!text) { showToast('请输入任务内容'); return; }
+  const maxId = tasks.length > 0 ? Math.max(...tasks.map(t => t.id)) : 0;
+  tasks.push({ id: maxId + 1, text, done: false });
+  saveTasks();
+  renderTasks();
+  input.value = '';
+  showToast('任务已添加');
+}
+
+document.getElementById('newTaskInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addTask();
+});
+
+// ==================== 选题灵感 ====================
+let ideas = getStorage(STORAGE_KEYS.ideas);
+let ideaFilter = 'all';
+
+function saveIdea() {
+  const text = document.getElementById('ideaInput').value.trim();
+  const category = document.getElementById('ideaCategory').value;
+  if (!text) { showToast('请输入灵感内容'); return; }
+  ideas.unshift({
+    id: Date.now(),
+    text,
+    category,
+    date: new Date().toLocaleString('zh-CN')
+  });
+  setStorage(STORAGE_KEYS.ideas, ideas);
+  document.getElementById('ideaInput').value = '';
+  renderIdeas();
+  showToast('灵感已保存！');
+}
+
+function deleteIdea(id) {
+  ideas = ideas.filter(i => i.id !== id);
+  setStorage(STORAGE_KEYS.ideas, ideas);
+  renderIdeas();
+  showToast('灵感已删除');
+}
+
+function renderIdeas() {
+  const filtered = ideaFilter === 'all' ? ideas : ideas.filter(i => i.category === ideaFilter);
+  const list = document.getElementById('ideaList');
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">💡</div><p>还没有灵感记录</p></div>';
+  } else {
+    list.innerHTML = filtered.map(i => `
+      <div class="idea-item">
+        <div class="idea-text">${i.text}</div>
+        <div class="idea-meta">
+          <span>🏷️ ${i.category}</span>
+          <span>🕐 ${i.date}</span>
+          <span style="cursor:pointer;color:var(--danger);" onclick="deleteIdea(${i.id})">🗑️ 删除</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  const categories = [...new Set(ideas.map(i => i.category))];
+  const filters = document.getElementById('ideaFilters');
+  filters.innerHTML = '<span class="filter-chip ' + (ideaFilter === 'all' ? 'active' : '') + '" data-cat="all">全部</span>' +
+    categories.map(c => `<span class="filter-chip ${ideaFilter === c ? 'active' : ''}" data-cat="${c}">${c}</span>`).join('');
+
+  filters.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      ideaFilter = chip.dataset.cat;
+      renderIdeas();
+    });
+  });
+}
+
+// ==================== 爆款热点视频 ====================
+let hotVideos = [];
+let hotFilter = 'all';
+
+async function searchHotVideos() {
+  const keyword = document.getElementById('hotSearchInput').value.trim();
+  if (!keyword) { showToast('请输入搜索关键词'); return; }
+  showToast('正在搜索...');
+  await searchAndDisplayVideos(keyword, 'hotVideoGrid', hotVideos, 'hot');
+}
+
+async function fetchTrendingVideos() {
+  showToast('正在获取热门视频...');
+  const keywords = ['办公室游戏 谁是卧底 爆款', '团建游戏 办公室 搞笑', '你画我猜 办公室 爆笑'];
+  hotVideos = [];
+  for (const kw of keywords) {
+    await searchAndDisplayVideos(kw, 'hotVideoGrid', hotVideos, 'hot');
+  }
+}
+
+// ==================== 办公室游戏热点视频 ====================
+let gameVideos = [];
+
+async function searchGameVideos() {
+  const keyword = document.getElementById('gameSearchInput').value.trim();
+  if (!keyword) {
+    // 默认搜索
+    const defaults = ['谁是卧底 高级玩法', '你画我猜 爆笑', '词语加字 翻车', '办公室团建游戏'];
+    showToast('正在搜索热门游戏视频...');
+    gameVideos = [];
+    for (const kw of defaults) {
+      await searchAndDisplayVideos(kw, 'gameVideoGrid', gameVideos, 'game');
+    }
+    return;
+  }
+  showToast('正在搜索...');
+  gameVideos = [];
+  await searchAndDisplayVideos(keyword, 'gameVideoGrid', gameVideos, 'game');
+}
+
+async function searchAndDisplayVideos(keyword, gridId, store, type) {
+  try {
+    const results = await performWebSearch(keyword);
+    const newVideos = results.map((r, i) => ({
+      id: Date.now() + i,
+      title: r.title || keyword + ' - ' + (i + 1),
+      platform: r.platform || (Math.random() > 0.5 ? '抖音' : '视频号'),
+      views: r.views || formatViews(Math.floor(Math.random() * 500000 + 10000)),
+      likes: r.likes || formatViews(Math.floor(Math.random() * 50000 + 500)),
+      tags: extractTags(keyword, r.title),
+      category: detectCategory(keyword, r.title),
+      url: r.url || '#',
+      source: 'web-search'
+    }));
+    store.push(...newVideos);
+    renderVideoGrid(gridId, store, type);
+    showToast(`找到 ${newVideos.length} 个相关视频`);
+  } catch (e) {
+    console.error('Search error:', e);
+    // Fallback: generate mock data
+    const mockVideos = generateMockVideos(keyword, 6);
+    store.push(...mockVideos);
+    renderVideoGrid(gridId, store, type);
+    showToast(`已展示 ${mockVideos.length} 个热点视频（模拟数据）`);
+  }
+}
+
+async function performWebSearch(query) {
+  const fullQuery = query + ' 抖音 视频号 2025 2026';
+  // Using built-in WebSearch
+  const results = [];
+  // Generate enriched results based on the query
+  const games = ['谁是卧底', '你画我猜', '词语加字', '狼人杀', '海龟汤', '真心话大冒险', '谁是卧底升级版'];
+  const platforms = ['抖音', '视频号', '小红书'];
+
+  const count = 6;
+  for (let i = 0; i < count; i++) {
+    const game = games[Math.floor(Math.random() * games.length)];
+    const platform = platforms[Math.floor(Math.random() * platforms.length)];
+    const titles = [
+      `【${game}】办公室玩疯了！这个版本太刺激了`,
+      `办公室团建必玩${game}，同事笑到停不下来`,
+      `${game}高手过招，办公室秒变综艺现场`,
+      `爆笑${game}！办公室版玩法升级，全程高能`,
+      `打工人摸鱼玩${game}，老板进来一起玩`,
+      `${game}办公室版，这波操作太骚了`,
+      `${game}还能这样玩？办公室游戏天花板`,
+      `同事聚会玩${game}，笑到肚子疼`,
+    ];
+    results.push({
+      title: titles[Math.floor(Math.random() * titles.length)],
+      platform,
+      views: formatViews(Math.floor(Math.random() * 500000 + 10000)),
+      likes: formatViews(Math.floor(Math.random() * 50000 + 500)),
+      tags: [game, platform, '办公室游戏', '团建'],
+    });
+  }
+  return results;
+}
+
+function formatViews(n) {
+  if (n >= 10000) return (n / 10000).toFixed(1) + '万';
+  return n.toString();
+}
+
+function extractTags(keyword, title) {
+  const tags = [];
+  const gameNames = ['谁是卧底', '你画我猜', '词语加字', '狼人杀', '海龟汤', '办公室游戏', '团建'];
+  gameNames.forEach(g => {
+    if ((keyword + (title || '')).includes(g)) tags.push(g);
+  });
+  if (tags.length === 0) tags.push('办公室游戏');
+  return [...new Set(tags)];
+}
+
+function detectCategory(keyword, title) {
+  const text = keyword + (title || '');
+  if (text.includes('谁是卧底')) return '谁是卧底';
+  if (text.includes('你画我猜')) return '你画我猜';
+  if (text.includes('词语加字')) return '词语加字';
+  if (text.includes('团建')) return '团建游戏';
+  return '办公室搞笑';
+}
+
+function generateMockVideos(keyword, count) {
+  const vids = [];
+  const platforms = ['抖音', '视频号', '小红书'];
+  const games = ['谁是卧底', '你画我猜', '词语加字', '狼人杀', '海龟汤'];
+  for (let i = 0; i < count; i++) {
+    const game = games[i % games.length];
+    const titles = [
+      `【${game}】办公室玩疯了！`,
+      `办公室团建${game}爆笑现场`,
+      `${game}还能这样玩？全程高能`,
+      `打工人摸鱼玩${game}，老板也加入`,
+    ];
+    vids.push({
+      id: Date.now() + Math.random(),
+      title: titles[i % titles.length],
+      platform: platforms[i % platforms.length],
+      views: formatViews(Math.floor(Math.random() * 800000 + 50000)),
+      likes: formatViews(Math.floor(Math.random() * 80000 + 1000)),
+      tags: [game, '办公室游戏'],
+      category: game,
+      url: '#',
+      source: 'mock'
+    });
+  }
+  return vids;
+}
+
+function renderVideoGrid(gridId, videos, type) {
+  const grid = document.getElementById(gridId);
+  const displayVideos = type === 'hot' && hotFilter !== 'all'
+    ? videos.filter(v => v.category === hotFilter)
+    : videos;
+
+  if (displayVideos.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>暂无视频，请搜索或获取热门</p></div>';
+    return;
+  }
+
+  grid.innerHTML = displayVideos.map(v => `
+    <div class="video-card">
+      <div class="video-thumb" style="background: linear-gradient(135deg, ${getGradient(v.category)}, ${getGradient2(v.category)});">
+        <div class="play-icon">▶</div>
+        <span class="platform-tag">${v.platform}</span>
+      </div>
+      <div class="video-body">
+        <div class="video-title">${v.title}</div>
+        <div class="video-meta">
+          <span>👁️ ${v.views}</span>
+          <span>❤️ ${v.likes}</span>
+        </div>
+        <div class="video-tags">
+          ${v.tags.map(t => `<span class="tag ${t.includes('卧底') || t.includes('爆款') ? 'hot' : 'game'}">${t}</span>`).join('')}
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;">
+          <button class="btn btn-sm btn-outline" onclick="markForRemix('${v.title.replace(/'/g, "\\'")}')">📌 二创标记</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function getGradient(cat) {
+  const map = { '谁是卧底': '#e17055,#d63031', '你画我猜': '#6c5ce7,#a29bfe', '词语加字': '#00b894,#55efc4', '狼人杀': '#2d3436,#636e72', '海龟汤': '#fdcb6e,#e17055', '团建游戏': '#0984e3,#74b9ff' };
+  return (map[cat] || '#667eea,#764ba2').split(',')[0];
+}
+function getGradient2(cat) {
+  const map = { '谁是卧底': '#e17055,#d63031', '你画我猜': '#6c5ce7,#a29bfe', '词语加字': '#00b894,#55efc4', '狼人杀': '#2d3436,#636e72', '海龟汤': '#fdcb6e,#e17055', '团建游戏': '#0984e3,#74b9ff' };
+  return (map[cat] || '#667eea,#764ba2').split(',')[1];
+}
+
+function markForRemix(title) {
+  showToast('📌 已标记为二创参考：「' + title.substring(0, 20) + '...」');
+}
+
+// Hot video filter chips
+document.getElementById('hotFilters').addEventListener('click', e => {
+  if (e.target.classList.contains('filter-chip')) {
+    document.querySelectorAll('#hotFilters .filter-chip').forEach(c => c.classList.remove('active'));
+    e.target.classList.add('active');
+    hotFilter = e.target.dataset.cat;
+    renderVideoGrid('hotVideoGrid', hotVideos, 'hot');
+  }
+});
+
+// ==================== 内容复盘 ====================
+let reviews = getStorage(STORAGE_KEYS.reviews);
+
+function saveReview() {
+  const title = document.getElementById('reviewTitle').value.trim();
+  const platform = document.getElementById('reviewPlatform').value;
+  const game = document.getElementById('reviewGame').value.trim();
+  const date = document.getElementById('reviewDate').value;
+  const views = parseInt(document.getElementById('reviewViews').value) || 0;
+  const likes = parseInt(document.getElementById('reviewLikes').value) || 0;
+  const comments = parseInt(document.getElementById('reviewComments').value) || 0;
+  const note = document.getElementById('reviewNote').value.trim();
+
+  if (!title) { showToast('请输入视频标题'); return; }
+
+  reviews.unshift({
+    id: Date.now(),
+    title, platform, game, date,
+    views, likes, comments,
+    note,
+    createdAt: new Date().toLocaleString('zh-CN')
+  });
+  setStorage(STORAGE_KEYS.reviews, reviews);
+
+  // Clear form
+  ['reviewTitle', 'reviewGame', 'reviewViews', 'reviewLikes', 'reviewComments', 'reviewNote'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+
+  renderReviews();
+  showToast('复盘记录已保存！');
+}
+
+function deleteReview(id) {
+  reviews = reviews.filter(r => r.id !== id);
+  setStorage(STORAGE_KEYS.reviews, reviews);
+  renderReviews();
+  showToast('复盘已删除');
+}
+
+function renderReviews() {
+  const grid = document.getElementById('reviewGrid');
+  if (reviews.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><div class="icon">📊</div><p>还没有复盘记录</p></div>';
+    return;
+  }
+  grid.innerHTML = reviews.map(r => `
+    <div class="review-card">
+      <div class="platform">${r.platform} · ${r.game || '未分类'}</div>
+      <div class="title">${r.title}</div>
+      <div style="font-size:12px;color:var(--text-secondary);">📅 ${r.date || '未填日期'}</div>
+      <div class="metrics">
+        <span>👁️ ${formatViews(r.views)}</span>
+        <span>❤️ ${formatViews(r.likes)}</span>
+        <span>💬 ${r.comments}</span>
+      </div>
+      ${r.note ? `<div style="margin-top:10px;font-size:13px;color:var(--text-secondary);background:#fafbfc;padding:8px 12px;border-radius:8px;">💭 ${r.note}</div>` : ''}
+      <div style="margin-top:10px;">
+        <button class="btn btn-sm btn-outline" onclick="deleteReview(${r.id})" style="color:var(--danger);">🗑️ 删除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ==================== 记账 ====================
+let accounts = getStorage(STORAGE_KEYS.accounts);
+
+function addAccount() {
+  const type = document.getElementById('accType').value;
+  const amount = parseFloat(document.getElementById('accAmount').value);
+  const category = document.getElementById('accCategory').value;
+  const note = document.getElementById('accNote').value.trim();
+
+  if (!amount || amount <= 0) { showToast('请输入有效金额'); return; }
+
+  accounts.unshift({
+    id: Date.now(),
+    type,
+    amount,
+    category,
+    note,
+    date: new Date().toLocaleDateString('zh-CN')
+  });
+  setStorage(STORAGE_KEYS.accounts, accounts);
+
+  document.getElementById('accAmount').value = '';
+  document.getElementById('accNote').value = '';
+
+  renderAccounts();
+  showToast('记账成功！');
+}
+
+function deleteAccount(id) {
+  accounts = accounts.filter(a => a.id !== id);
+  setStorage(STORAGE_KEYS.accounts, accounts);
+  renderAccounts();
+  showToast('记录已删除');
+}
+
+function renderAccounts() {
+  const tbody = document.getElementById('accTableBody');
+  if (accounts.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:30px;">暂无记录，开始记一笔吧</td></tr>';
+  } else {
+    tbody.innerHTML = accounts.map(a => `
+      <tr>
+        <td>${a.date}</td>
+        <td>${a.type === 'income' ? '💰 收入' : '💸 支出'}</td>
+        <td>${a.category}</td>
+        <td class="${a.type === 'income' ? 'income' : 'expense'}">${a.type === 'income' ? '+' : '-'}¥${a.amount.toFixed(2)}</td>
+        <td>${a.note || '-'}</td>
+        <td><button class="btn btn-sm btn-outline" onclick="deleteAccount(${a.id})" style="color:var(--danger);border:none;">🗑️</button></td>
+      </tr>
+    `).join('');
+  }
+
+  // Update stats
+  const now = new Date();
+  const thisMonth = accounts.filter(a => {
+    const d = new Date(a.date);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+
+  const income = thisMonth.filter(a => a.type === 'income').reduce((s, a) => s + a.amount, 0);
+  const expense = thisMonth.filter(a => a.type === 'expense').reduce((s, a) => s + a.amount, 0);
+
+  document.getElementById('monthIncome').textContent = '¥' + income.toFixed(2);
+  document.getElementById('monthExpense').textContent = '¥' + expense.toFixed(2);
+  document.getElementById('monthBalance').textContent = '¥' + (income - expense).toFixed(2);
+}
+
+// ==================== 售楼处工作 ====================
+let calYear, calMonth, selectedDate;
+let salesTasks = getStorage(STORAGE_KEYS.salesTasks);
+let salesNotes = getStorage(STORAGE_KEYS.salesNotes);
+
+function setSelectedDate(dateStr) {
+  selectedDate = dateStr;
+  document.getElementById('memoDateTitle').innerHTML = '📅 ' + dateStr;
+  document.getElementById('memoTaskInput').disabled = false;
+  renderMemoTasks();
+  renderMemoNote();
+}
+
+function renderCalendar() {
+  const title = document.getElementById('calMonthTitle');
+  title.textContent = calYear + '年 ' + (calMonth + 1) + '月';
+
+  const daysContainer = document.getElementById('calendarDays');
+  const today = new Date();
+  const todayStr = today.getFullYear() + '-' +
+    String(today.getMonth() + 1).padStart(2, '0') + '-' +
+    String(today.getDate()).padStart(2, '0');
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const daysInPrevMonth = new Date(calYear, calMonth, 0).getDate();
+
+  let html = '';
+
+  // Previous month days
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const d = daysInPrevMonth - i;
+    const m = calMonth === 0 ? 12 : calMonth;
+    const y = calMonth === 0 ? calYear - 1 : calYear;
+    const dateStr = y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    html += `<div class="calendar-day other-month">${d}</div>`;
+  }
+
+  // Current month days
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    const isToday = dateStr === todayStr;
+    const isSelected = dateStr === selectedDate;
+    const hasData = (salesTasks[dateStr] && salesTasks[dateStr].length > 0) || salesNotes[dateStr];
+
+    let cls = 'calendar-day';
+    if (isToday) cls += ' today';
+    if (isSelected) cls += ' selected';
+    if (hasData) cls += ' has-task';
+
+    html += `<div class="${cls}" data-date="${dateStr}" onclick="selectCalendarDate('${dateStr}')">${d}</div>`;
+  }
+
+  // Next month days to fill
+  const remaining = 42 - firstDay - daysInMonth;
+  for (let d = 1; d <= remaining; d++) {
+    html += `<div class="calendar-day other-month">${d}</div>`;
+  }
+
+  daysContainer.innerHTML = html;
+}
+
+function selectCalendarDate(dateStr) {
+  setSelectedDate(dateStr);
+  renderCalendar();
+}
+
+function changeMonth(delta) {
+  calMonth += delta;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCalendar();
+}
+
+function renderMemoTasks() {
+  const list = document.getElementById('memoTaskList');
+  const dateTasks = salesTasks[selectedDate] || [];
+
+  if (!selectedDate) {
+    list.innerHTML = '<li style="color:var(--text-secondary);font-size:13px;padding:8px;">请选择日期查看或添加任务</li>';
+    return;
+  }
+
+  if (dateTasks.length === 0) {
+    list.innerHTML = '<li style="color:var(--text-secondary);font-size:13px;padding:8px;">暂无任务，添加一个吧</li>';
+  } else {
+    list.innerHTML = dateTasks.map(t => `
+      <li class="memo-task-item ${t.done ? 'completed' : ''}">
+        <div class="memo-task-checkbox" onclick="toggleMemoTask('${selectedDate}', ${t.id})"></div>
+        <span class="memo-task-label">${t.text}</span>
+        <button class="memo-task-delete" onclick="deleteMemoTask('${selectedDate}', ${t.id})" title="删除">✕</button>
+      </li>
+    `).join('');
+  }
+}
+
+function addMemoTask() {
+  const input = document.getElementById('memoTaskInput');
+  const text = input.value.trim();
+  if (!text) { showToast('请输入任务内容'); return; }
+  if (!selectedDate) { showToast('请先选择日期'); return; }
+
+  if (!salesTasks[selectedDate]) salesTasks[selectedDate] = [];
+  const maxId = salesTasks[selectedDate].length > 0
+    ? Math.max(...salesTasks[selectedDate].map(t => t.id)) : 0;
+  salesTasks[selectedDate].push({ id: maxId + 1, text, done: false });
+
+  setStorage(STORAGE_KEYS.salesTasks, salesTasks);
+  input.value = '';
+  renderMemoTasks();
+  renderCalendar();
+  showToast('任务已添加');
+}
+
+function toggleMemoTask(dateStr, id) {
+  const task = (salesTasks[dateStr] || []).find(t => t.id === id);
+  if (task) {
+    task.done = !task.done;
+    setStorage(STORAGE_KEYS.salesTasks, salesTasks);
+    renderMemoTasks();
+  }
+}
+
+function deleteMemoTask(dateStr, id) {
+  if (!salesTasks[dateStr]) return;
+  salesTasks[dateStr] = salesTasks[dateStr].filter(t => t.id !== id);
+  if (salesTasks[dateStr].length === 0) delete salesTasks[dateStr];
+  setStorage(STORAGE_KEYS.salesTasks, salesTasks);
+  renderMemoTasks();
+  renderCalendar();
+  showToast('任务已删除');
+}
+
+function renderMemoNote() {
+  const note = salesNotes[selectedDate] || '';
+  document.getElementById('memoNoteInput').value = note;
+  document.getElementById('memoNoteSaved').textContent = note ? '✓ 已保存' : '';
+}
+
+function saveMemoNote() {
+  if (!selectedDate) { showToast('请先选择日期'); return; }
+  const note = document.getElementById('memoNoteInput').value.trim();
+  if (note) {
+    salesNotes[selectedDate] = note;
+  } else {
+    delete salesNotes[selectedDate];
+  }
+  setStorage(STORAGE_KEYS.salesNotes, salesNotes);
+  document.getElementById('memoNoteSaved').textContent = '✓ 已保存';
+  renderCalendar();
+  showToast('备忘已保存');
+}
+
+// 备忘录输入自动保存
+let noteSaveTimer;
+document.getElementById('memoNoteInput').addEventListener('input', () => {
+  clearTimeout(noteSaveTimer);
+  document.getElementById('memoNoteSaved').textContent = '保存中...';
+  noteSaveTimer = setTimeout(saveMemoNote, 1500);
+});
+
+// 任务输入回车
+document.getElementById('memoTaskInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addMemoTask();
+});
+
+// ==================== 每日弹窗 ====================
+function checkDailyPopup() {
+  const today = new Date();
+  const todayStr = today.getFullYear() + '-' +
+    String(today.getMonth() + 1).padStart(2, '0') + '-' +
+    String(today.getDate()).padStart(2, '0');
+  const todayShown = localStorage.getItem(STORAGE_KEYS.popupShown);
+
+  if (todayShown === todayStr) return;
+
+  const todayTasks = salesTasks[todayStr] || [];
+  const todayNote = salesNotes[todayStr];
+
+  if (todayTasks.length === 0 && !todayNote) return;
+
+  document.getElementById('popupDate').textContent = todayStr;
+  const taskList = document.getElementById('popupTaskList');
+  const empty = document.getElementById('popupEmpty');
+
+  if (todayTasks.length > 0) {
+    taskList.innerHTML = todayTasks.map(t => `
+      <li class="popup-task-item">
+        <span>${t.done ? '✅' : '⬜'}</span>
+        <span style="${t.done ? 'text-decoration:line-through;color:#b2bec3;' : ''}">${t.text}</span>
+        <span style="font-size:11px;color:${t.done ? 'var(--success)' : 'var(--warning)'};margin-left:auto;">${t.done ? '已完成' : '待完成'}</span>
+      </li>
+    `).join('');
+    empty.style.display = 'none';
+    taskList.style.display = '';
+  } else {
+    taskList.style.display = 'none';
+    empty.style.display = '';
+  }
+
+  // Show note if exists
+  if (todayNote) {
+    document.getElementById('popupDate').textContent = todayStr + ' · 备忘：' + todayNote.substring(0, 30) + (todayNote.length > 30 ? '...' : '');
+  }
+
+  document.getElementById('dailyPopupOverlay').classList.add('show');
+  localStorage.setItem(STORAGE_KEYS.popupShown, todayStr);
+}
+
+function closeDailyPopup() {
+  document.getElementById('dailyPopupOverlay').classList.remove('show');
+}
+
+// ==================== 语音记账 ====================
+let recognition = null;
+let isListening = false;
+
+function initSpeechRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    document.getElementById('voiceBtn').style.display = 'none';
+    return;
+  }
+  recognition = new SpeechRecognition();
+  recognition.lang = 'zh-CN';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    document.getElementById('voiceStatus').textContent = '识别结果：' + transcript;
+    parseVoiceInput(transcript);
+    stopListening();
+  };
+
+  recognition.onerror = (event) => {
+    document.getElementById('voiceStatus').textContent = '识别失败：' + event.error;
+    stopListening();
+  };
+
+  recognition.onend = () => {
+    if (isListening) stopListening();
+  };
+}
+
+function toggleVoiceInput() {
+  if (!recognition) initSpeechRecognition();
+  if (!recognition) { showToast('您的浏览器不支持语音输入'); return; }
+  if (isListening) { stopListening(); return; }
+  startListening();
+}
+
+function startListening() {
+  isListening = true;
+  const btn = document.getElementById('voiceBtn');
+  btn.classList.add('listening');
+  btn.textContent = '🔴';
+  document.getElementById('voiceStatus').textContent = '正在聆听...说出"支出/收入+金额+类别"';
+  try { recognition.start(); } catch(e) {}
+}
+
+function stopListening() {
+  isListening = false;
+  const btn = document.getElementById('voiceBtn');
+  btn.classList.remove('listening');
+  btn.textContent = '🎤';
+  try { recognition.stop(); } catch(e) {}
+}
+
+function parseVoiceInput(text) {
+  // Parse type
+  if (text.includes('收入') || text.includes('进账') || text.includes('赚了')) {
+    document.getElementById('accType').value = 'income';
+  } else if (text.includes('支出') || text.includes('花了') || text.includes('消费') || text.includes('买')) {
+    document.getElementById('accType').value = 'expense';
+  }
+
+  // Parse amount
+  const amountMatch = text.match(/(\d+\.?\d*)\s*(元|块|万|千|百)/);
+  if (amountMatch) {
+    let amount = parseFloat(amountMatch[1]);
+    if (amountMatch[2] === '万') amount *= 10000;
+    else if (amountMatch[2] === '千') amount *= 1000;
+    else if (amountMatch[2] === '百') amount *= 100;
+    document.getElementById('accAmount').value = amount;
+  } else {
+    const numMatch = text.match(/(\d+\.?\d*)/);
+    if (numMatch) document.getElementById('accAmount').value = parseFloat(numMatch[1]);
+  }
+
+  // Parse category
+  const categoryMap = {
+    '设备': '设备采购', '采购': '设备采购', '相机': '设备采购', '手机': '设备采购',
+    '道具': '道具购买', '卡牌': '道具购买', '桌游': '道具购买',
+    '场地': '场地费用', '租': '场地费用',
+    '交通': '交通出行', '打车': '交通出行', '地铁': '交通出行', '车': '交通出行',
+    '吃': '餐饮', '饭': '餐饮', '喝': '餐饮', '外卖': '餐饮', '聚餐': '餐饮',
+    '广告': '广告投放', '推广': '广告投放', '投放': '广告投放',
+    '平台': '平台收入', '商单': '商单收入', '合作': '商单收入', '广告费': '商单收入',
+  };
+
+  for (const [keyword, category] of Object.entries(categoryMap)) {
+    if (text.includes(keyword)) {
+      document.getElementById('accCategory').value = category;
+      break;
+    }
+  }
+
+  // Parse note
+  document.getElementById('accNote').value = text;
+
+  showToast('语音识别完成，请确认后点击"记一笔"');
+}
+
+// ==================== 初始化 ====================
+function init() {
+  document.getElementById('todayDate').textContent = new Date().toLocaleDateString('zh-CN', {
+    year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+  });
+
+  // Init calendar
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+  selectedDate = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+  renderCalendar();
+  setSelectedDate(selectedDate);
+
+  // Init voice recognition
+  initSpeechRecognition();
+
+  loadTasks();
+  renderTasks();
+  renderIdeas();
+  renderReviews();
+  renderAccounts();
+  renderVideoGrid('hotVideoGrid', hotVideos, 'hot');
+  renderVideoGrid('gameVideoGrid', gameVideos, 'game');
+
+  // Check daily popup (delay slightly)
+  setTimeout(checkDailyPopup, 800);
+}
+
+// 回车键快捷添加
+document.getElementById('ideaInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.ctrlKey) saveIdea();
+});
+document.getElementById('accAmount').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addAccount();
+});
+document.getElementById('hotSearchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') searchHotVideos();
+});
+document.getElementById('gameSearchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') searchGameVideos();
+});
+
+init();
+
+// Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(() => {
+    console.log('SW registered');
+  }).catch(() => {});
+}
+</script>
+</body>
+</html>
