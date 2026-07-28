@@ -309,6 +309,18 @@ body {
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-size: 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+.video-thumb:hover {
+  filter: brightness(1.15);
+}
+.video-thumb:hover .play-icon {
+  transform: scale(1.15);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+.video-thumb:active {
+  filter: brightness(0.95);
 }
 .video-thumb .platform-tag {
   position: absolute;
@@ -841,6 +853,60 @@ body {
   /* Memo textarea */
   .memo-section textarea { min-height: 80px; }
 }
+/* ========== Sync ========== */
+.sync-nav-item {
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 8px !important;
+  margin-top: auto;
+}
+.sync-badge {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-left: auto;
+  background: var(--text-secondary);
+}
+.sync-badge.synced { background: var(--success); }
+.sync-badge.unsynced { background: var(--warning); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.sync-modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5); z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeIn 0.2s;
+}
+.sync-modal {
+  background: #fff; border-radius: 16px;
+  padding: 28px 24px; width: 90%; max-width: 420px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  max-height: 85vh; overflow-y: auto;
+}
+.sync-modal h3 { font-size: 18px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+.sync-modal .sync-subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
+.sync-modal label {
+  display: block; font-size: 13px; font-weight: 600;
+  color: var(--text-secondary); margin-bottom: 6px;
+}
+.sync-modal input, .sync-modal select {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+  border-radius: 8px; font-size: 13px; margin-bottom: 14px;
+  font-family: 'Courier New', monospace;
+}
+.sync-modal .sync-actions {
+  display: flex; gap: 10px; margin-top: 6px;
+}
+.sync-modal .btn { flex: 1; }
+.sync-status { font-size: 12px; color: var(--text-secondary); margin-top: 12px; text-align: center; }
+.sync-status.success { color: var(--success); }
+.sync-status.error { color: var(--danger); }
+.sync-last-time { font-size: 11px; color: var(--text-secondary); text-align: center; margin-top: 14px; }
+
+/* Mobile sync */
+@media (max-width: 768px) {
+  .sync-nav-item { border-top: none; padding-top: 0 !important; margin-top: 0; }
+}
+
 </style>
 </head>
 <body>
@@ -873,6 +939,10 @@ body {
     </li>
     <li class="nav-item" data-page="sales-office">
       <span class="nav-icon">🏢</span><span>售楼处工作</span>
+    </li>
+    <li class="nav-item sync-nav-item" id="syncNavBtn">
+      <span class="nav-icon">☁️</span><span>云同步</span>
+      <span class="sync-badge unsynced" id="syncBadge"></span>
     </li>
   </ul>
 </nav>
@@ -1188,6 +1258,27 @@ body {
   </section>
 
 </main>
+
+<!-- Sync Modal -->
+<div class="sync-modal-overlay" id="syncModal" style="display:none;">
+  <div class="sync-modal">
+    <h3>☁️ 云端数据同步</h3>
+    <p class="sync-subtitle">通过 GitHub 同步手机和电脑之间的数据</p>
+
+    <label>GitHub Token (只需设置一次)</label>
+    <input type="password" id="syncToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+
+    <div class="sync-actions">
+      <button class="btn btn-primary" id="btnUpload" onclick="syncUpload()">⬆ 上传到云端</button>
+      <button class="btn btn-outline" id="btnDownload" onclick="syncDownload()">⬇ 从云端拉取</button>
+    </div>
+    <p class="sync-status" id="syncStatus"></p>
+    <p class="sync-last-time" id="syncLastTime">尚未同步过</p>
+    <div style="text-align:center;margin-top:14px;">
+      <button class="btn btn-sm" onclick="closeSyncModal()" style="background:#eee;border:none;padding:8px 24px;border-radius:8px;cursor:pointer;">关闭</button>
+    </div>
+  </div>
+</div>
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
@@ -1565,7 +1656,7 @@ function renderVideoGrid(gridId, videos, type) {
 
   grid.innerHTML = displayVideos.map(v => `
     <div class="video-card">
-      <div class="video-thumb" style="background: linear-gradient(135deg, ${getGradient(v.category)}, ${getGradient2(v.category)});">
+      <div class="video-thumb" onclick="openVideoSearch('${v.platform.replace(/'/g, '\\\'')}', '${v.title.replace(/'/g, '\\\'')}', '${v.category.replace(/'/g, '\\\'') || ''}')" style="background: linear-gradient(135deg, ${getGradient(v.category)}, ${getGradient2(v.category)}); cursor: pointer;">
         <div class="play-icon">▶</div>
         <span class="platform-tag">${v.platform}</span>
       </div>
@@ -1597,6 +1688,21 @@ function getGradient2(cat) {
 
 function markForRemix(title) {
   showToast('📌 已标记为二创参考：「' + title.substring(0, 20) + '...」');
+}
+
+function openVideoSearch(platform, title, category) {
+  const keyword = encodeURIComponent(title + ' ' + (category || ''));
+  const gameKw = encodeURIComponent(category ? (category + ' 办公室游戏') : title);
+  let url;
+  if (platform === '抖音') {
+    url = 'https://www.douyin.com/search/' + keyword;
+  } else if (platform === '小红书') {
+    url = 'https://www.xiaohongshu.com/search_result?keyword=' + keyword;
+  } else {
+    // 视频号没有直接网页搜索，跳转抖音同类搜索
+    url = 'https://www.douyin.com/search/' + gameKw;
+  }
+  window.open(url, '_blank');
 }
 
 // Hot video filter chips
@@ -2096,6 +2202,168 @@ document.getElementById('hotSearchInput').addEventListener('keydown', e => {
 document.getElementById('gameSearchInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') searchGameVideos();
 });
+
+// ==================== 云同步 ====================
+const SYNC_CONFIG = {
+  owner: 'guanlulu66',
+  repo: 'office-game-workbench',
+  branch: 'main',
+  filePath: 'sync-data.json'
+};
+
+function getSyncToken() { return localStorage.getItem('wb_sync_token') || ''; }
+function setSyncToken(t) { localStorage.setItem('wb_sync_token', t); }
+function getSyncTime() { return localStorage.getItem('wb_sync_time') || ''; }
+function setSyncTime(t) { localStorage.setItem('wb_sync_time', t); }
+
+function updateSyncBadge() {
+  const badge = document.getElementById('syncBadge');
+  const lastTime = getSyncTime();
+  if (lastTime) {
+    badge.className = 'sync-badge synced';
+    document.getElementById('syncLastTime').textContent = '上次同步：' + lastTime;
+  } else {
+    badge.className = 'sync-badge unsynced';
+    document.getElementById('syncLastTime').textContent = '尚未同步过';
+  }
+}
+
+function showSyncModal() {
+  document.getElementById('syncToken').value = getSyncToken();
+  document.getElementById('syncStatus').textContent = '';
+  document.getElementById('syncStatus').className = 'sync-status';
+  updateSyncBadge();
+  document.getElementById('syncModal').style.display = 'flex';
+}
+
+function closeSyncModal() {
+  const token = document.getElementById('syncToken').value.trim();
+  if (token) setSyncToken(token);
+  document.getElementById('syncModal').style.display = 'none';
+}
+
+document.getElementById('syncNavBtn').addEventListener('click', showSyncModal);
+document.getElementById('syncModal').addEventListener('click', function(e) {
+  if (e.target === this) closeSyncModal();
+});
+
+function apiRequest(method, apiPath, token, body) {
+  return new Promise((resolve, reject) => {
+    const data = body ? JSON.stringify(body) : null;
+    const req = new XMLHttpRequest();
+    req.open(method, 'https://api.github.com' + apiPath);
+    req.setRequestHeader('Authorization', 'token ' + token);
+    req.setRequestHeader('Accept', 'application/vnd.github+json');
+    req.setRequestHeader('User-Agent', 'WorkBuddy');
+    if (data) req.setRequestHeader('Content-Type', 'application/json');
+    req.onload = () => {
+      try { resolve({ status: req.status, body: JSON.parse(req.responseText) }); }
+      catch { resolve({ status: req.status, body: req.responseText }); }
+    };
+    req.onerror = () => reject(new Error('Network error'));
+    req.send(data);
+  });
+}
+
+async function syncUpload() {
+  const token = document.getElementById('syncToken').value.trim();
+  if (!token) { showSyncError('请先输入 GitHub Token'); return; }
+  setSyncToken(token);
+
+  const btn = document.getElementById('btnUpload');
+  btn.disabled = true;
+  btn.textContent = '⏳ 上传中...';
+
+  try {
+    const allData = {};
+    Object.entries(STORAGE_KEYS).forEach(([key, storageKey]) => {
+      const val = localStorage.getItem(storageKey);
+      if (val !== null) allData[storageKey] = val;
+    });
+
+    const content = JSON.stringify({ data: allData, syncedAt: new Date().toISOString() });
+
+    // Get existing file SHA if exists
+    let sha = '';
+    try {
+      const getRes = await apiRequest('GET', '/repos/' + SYNC_CONFIG.owner + '/' + SYNC_CONFIG.repo + '/contents/' + SYNC_CONFIG.filePath + '?ref=' + SYNC_CONFIG.branch, token);
+      if (getRes.status === 200 && getRes.body.sha) sha = getRes.body.sha;
+    } catch(e) {}
+
+    const putBody = {
+      message: 'Cloud sync: ' + new Date().toLocaleString('zh-CN'),
+      content: btoa(unescape(encodeURIComponent(content))),
+      branch: SYNC_CONFIG.branch
+    };
+    if (sha) putBody.sha = sha;
+
+    const res = await apiRequest('PUT', '/repos/' + SYNC_CONFIG.owner + '/' + SYNC_CONFIG.repo + '/contents/' + SYNC_CONFIG.filePath, token, putBody);
+
+    if (res.status === 201 || res.status === 200) {
+      const now = new Date().toLocaleString('zh-CN');
+      setSyncTime(now);
+      updateSyncBadge();
+      showSyncSuccess('✅ 数据已上传到云端 (' + now + ')');
+    } else {
+      showSyncError('上传失败: ' + (res.body.message || res.status));
+    }
+  } catch(e) {
+    showSyncError('网络错误: ' + e.message);
+  }
+  btn.disabled = false;
+  btn.textContent = '⬆ 上传到云端';
+}
+
+async function syncDownload() {
+  const token = document.getElementById('syncToken').value.trim();
+  if (!token) { showSyncError('请先输入 GitHub Token'); return; }
+  setSyncToken(token);
+
+  const btn = document.getElementById('btnDownload');
+  btn.disabled = true;
+  btn.textContent = '⏳ 拉取中...';
+
+  try {
+    const res = await apiRequest('GET', '/repos/' + SYNC_CONFIG.owner + '/' + SYNC_CONFIG.repo + '/contents/' + SYNC_CONFIG.filePath + '?ref=' + SYNC_CONFIG.branch, token);
+
+    if (res.status === 200 && res.body.content) {
+      const decoded = JSON.parse(decodeURIComponent(escape(atob(res.body.content.replace(/\s/g, '')))));
+      if (decoded.data) {
+        Object.entries(decoded.data).forEach(([key, val]) => {
+          localStorage.setItem(key, val);
+        });
+        const syncTime = decoded.syncedAt ? new Date(decoded.syncedAt).toLocaleString('zh-CN') : new Date().toLocaleString('zh-CN');
+        setSyncTime(syncTime);
+        updateSyncBadge();
+        showSyncSuccess('✅ 数据已从云端拉取 (' + syncTime + ')，页面即将刷新...');
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        showSyncError('云端数据格式错误');
+      }
+    } else if (res.status === 404) {
+      showSyncError('云端暂无数据，请先上传');
+    } else {
+      showSyncError('拉取失败: ' + (res.body.message || res.status));
+    }
+  } catch(e) {
+    showSyncError('网络错误: ' + e.message);
+  }
+  btn.disabled = false;
+  btn.textContent = '⬇ 从云端拉取';
+}
+
+function showSyncSuccess(msg) {
+  const el = document.getElementById('syncStatus');
+  el.textContent = msg;
+  el.className = 'sync-status success';
+}
+function showSyncError(msg) {
+  const el = document.getElementById('syncStatus');
+  el.textContent = msg;
+  el.className = 'sync-status error';
+}
+
+updateSyncBadge();
 
 init();
 
