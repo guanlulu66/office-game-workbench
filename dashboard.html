@@ -309,6 +309,18 @@ body {
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-size: 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+.video-thumb:hover {
+  filter: brightness(1.15);
+}
+.video-thumb:hover .play-icon {
+  transform: scale(1.15);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+.video-thumb:active {
+  filter: brightness(0.95);
 }
 .video-thumb .platform-tag {
   position: absolute;
@@ -841,6 +853,60 @@ body {
   /* Memo textarea */
   .memo-section textarea { min-height: 80px; }
 }
+/* ========== Sync ========== */
+.sync-nav-item {
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 8px !important;
+  margin-top: auto;
+}
+.sync-badge {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-left: auto;
+  background: var(--text-secondary);
+}
+.sync-badge.synced { background: var(--success); }
+.sync-badge.unsynced { background: var(--warning); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.sync-modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5); z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeIn 0.2s;
+}
+.sync-modal {
+  background: #fff; border-radius: 16px;
+  padding: 28px 24px; width: 90%; max-width: 420px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  max-height: 85vh; overflow-y: auto;
+}
+.sync-modal h3 { font-size: 18px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+.sync-modal .sync-subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
+.sync-modal label {
+  display: block; font-size: 13px; font-weight: 600;
+  color: var(--text-secondary); margin-bottom: 6px;
+}
+.sync-modal input, .sync-modal select {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+  border-radius: 8px; font-size: 13px; margin-bottom: 14px;
+  font-family: 'Courier New', monospace;
+}
+.sync-modal .sync-actions {
+  display: flex; gap: 10px; margin-top: 6px;
+}
+.sync-modal .btn { flex: 1; }
+.sync-status { font-size: 12px; color: var(--text-secondary); margin-top: 12px; text-align: center; }
+.sync-status.success { color: var(--success); }
+.sync-status.error { color: var(--danger); }
+.sync-last-time { font-size: 11px; color: var(--text-secondary); text-align: center; margin-top: 14px; }
+
+/* Mobile sync */
+@media (max-width: 768px) {
+  .sync-nav-item { border-top: none; padding-top: 0 !important; margin-top: 0; }
+}
+
 </style>
 </head>
 <body>
@@ -859,20 +925,25 @@ body {
     <li class="nav-item" data-page="inspiration">
       <span class="nav-icon">💡</span><span>选题灵感</span>
     </li>
-    <li class="nav-item" data-page="hot-videos">
-      <span class="nav-icon">🔥</span><span>爆款热点/二创</span>
+    <li class="nav-item" data-page="hot-push">
+      <span class="nav-icon">🔥</span><span>热点推送</span>
     </li>
     <li class="nav-item" data-page="review">
       <span class="nav-icon">📊</span><span>内容复盘</span>
     </li>
-    <li class="nav-item" data-page="game-videos">
-      <span class="nav-icon">🎮</span><span>办公室游戏热点</span>
+    <li class="nav-item" data-page="favorites">
+      <span class="nav-icon">⭐</span><span>收藏夹</span>
+      <span class="badge" id="favBadge" style="display:none">0</span>
     </li>
     <li class="nav-item" data-page="accounting">
       <span class="nav-icon">💰</span><span>记账</span>
     </li>
     <li class="nav-item" data-page="sales-office">
       <span class="nav-icon">🏢</span><span>售楼处工作</span>
+    </li>
+    <li class="nav-item sync-nav-item" id="syncNavBtn">
+      <span class="nav-icon">☁️</span><span>云同步</span>
+      <span class="sync-badge unsynced" id="syncBadge"></span>
     </li>
   </ul>
 </nav>
@@ -953,7 +1024,7 @@ body {
   </section>
 
   <!-- ==================== 爆款热点/二创 ==================== -->
-  <section class="page" id="page-hot-videos">
+  <section class="page" id="page-hot-push">
     <div class="page-header">
       <h2>🔥 爆款热点视频 / 二创参考</h2>
       <p>追踪抖音、视频号等平台的办公室游戏热门视频，寻找二创灵感</p>
@@ -964,7 +1035,7 @@ body {
       <div class="search-bar">
         <input type="text" id="hotSearchInput" placeholder="搜索关键词，如：办公室游戏 谁是卧底 团建...">
         <button class="btn btn-primary" onclick="searchHotVideos()">🔍 搜索</button>
-        <button class="btn btn-outline" onclick="fetchTrendingVideos()">🔥 获取热门</button>
+        <button class="btn btn-outline" onclick="fetchTrendingUpdate()">🔄 刷新热点</button>
       </div>
       <div class="category-filters" id="hotFilters">
         <span class="filter-chip active" data-cat="all">全部</span>
@@ -1025,47 +1096,24 @@ body {
     </div>
   </section>
 
-  <!-- ==================== 办公室游戏热点视频 ==================== -->
-  <section class="page" id="page-game-videos">
+  <!-- ==================== 收藏夹 ==================== -->
+  <section class="page" id="page-favorites">
     <div class="page-header">
-      <h2>🎮 办公室游戏热点视频</h2>
-      <p>专为办公室游戏自媒体定制的热点追踪，挖掘谁是卧底、你画我猜、词语加字等爆款内容</p>
+      <h2>⭐ 收藏夹</h2>
+      <p>从热点推送收藏的精选视频，二创素材库（已收藏：<span id="favCount">0</span> 条）</p>
     </div>
 
-    <div class="card">
-      <div class="card-title">🎯 热点趋势</div>
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">🔥 谁是卧底 - 近7天热度</div>
-          <div class="stat-value red">89.6万</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">🎨 你画我猜 - 近7天热度</div>
-          <div class="stat-value purple">67.2万</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">📝 词语加字 - 近7天热度</div>
-          <div class="stat-value blue">43.8万</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">🎉 办公室团建 - 近7天热度</div>
-          <div class="stat-value green">112.4万</div>
-        </div>
+    <div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div class="card-title" style="margin:0;">📁 我的收藏素材</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm" onclick="exportFavorites()">📤 导出素材列表</button>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title">🔍 搜索办公室游戏视频</div>
-      <div class="search-bar">
-        <input type="text" id="gameSearchInput" placeholder="搜索：谁是卧底高级玩法、你画我猜爆笑、词语加字翻车...">
-        <button class="btn btn-primary" onclick="searchGameVideos()">🔍 搜索</button>
-      </div>
-    </div>
-
-    <div class="video-grid" id="gameVideoGrid">
+    <div class="video-grid" id="favGrid">
       <div class="empty-state">
-        <div class="icon">🎮</div>
-        <p>点击搜索获取办公室游戏相关热点视频</p>
+        <div class="icon">⭐</div>
+        <p>还没有收藏视频，去「热点推送」发现好内容并收藏吧！</p>
       </div>
     </div>
   </section>
@@ -1189,6 +1237,27 @@ body {
 
 </main>
 
+<!-- Sync Modal -->
+<div class="sync-modal-overlay" id="syncModal" style="display:none;">
+  <div class="sync-modal">
+    <h3>☁️ 云端数据同步</h3>
+    <p class="sync-subtitle">通过 GitHub 同步手机和电脑之间的数据</p>
+
+    <label>GitHub Token (只需设置一次)</label>
+    <input type="password" id="syncToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+
+    <div class="sync-actions">
+      <button class="btn btn-primary" id="btnUpload" onclick="syncUpload()">⬆ 上传到云端</button>
+      <button class="btn btn-outline" id="btnDownload" onclick="syncDownload()">⬇ 从云端拉取</button>
+    </div>
+    <p class="sync-status" id="syncStatus"></p>
+    <p class="sync-last-time" id="syncLastTime">尚未同步过</p>
+    <div style="text-align:center;margin-top:14px;">
+      <button class="btn btn-sm" onclick="closeSyncModal()" style="background:#eee;border:none;padding:8px 24px;border-radius:8px;cursor:pointer;">关闭</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -1211,6 +1280,7 @@ const STORAGE_KEYS = {
   ideas: 'wb_ideas',
   reviews: 'wb_reviews',
   accounts: 'wb_accounts',
+  favorites: 'wb_favorites',
   salesTasks: 'wb_sales_tasks',
   salesNotes: 'wb_sales_notes',
   popupShown: 'wb_popup_shown'
@@ -1259,8 +1329,8 @@ document.querySelectorAll('.nav-item').forEach(item => {
     if (page === 'inspiration') renderIdeas();
     if (page === 'review') renderReviews();
     if (page === 'accounting') renderAccounts();
-    if (page === 'hot-videos') renderVideoGrid('hotVideoGrid', hotVideos, 'hot');
-    if (page === 'game-videos') renderVideoGrid('gameVideoGrid', gameVideos, 'game');
+    if (page === 'hot-push') { loadHotVideos(); updateFavBadge(); }
+    if (page === 'favorites') renderFavorites();
   });
 });
 
@@ -1401,155 +1471,250 @@ function renderIdeas() {
   });
 }
 
-// ==================== 爆款热点视频 ====================
+// ==================== 热点推送（从云端加载真实数据） ====================
+const HOT_VIDEOS_CACHE_KEY = 'wb_hot_videos_cache';
+const HOT_VIDEOS_CACHE_TIME_KEY = 'wb_hot_videos_time';
+const HOT_VIDEOS_URL = 'https://raw.githubusercontent.com/guanlulu66/office-game-workbench/main/hot-videos.json';
+const HOT_VIDEOS_LOCAL = 'hot-videos.json';
+
 let hotVideos = [];
 let hotFilter = 'all';
 
-async function searchHotVideos() {
-  const keyword = document.getElementById('hotSearchInput').value.trim();
-  if (!keyword) { showToast('请输入搜索关键词'); return; }
-  showToast('正在搜索...');
-  await searchAndDisplayVideos(keyword, 'hotVideoGrid', hotVideos, 'hot');
-}
+async function loadHotVideos() {
+  const grid = document.getElementById('hotVideoGrid');
+  if (!grid) return;
+  grid.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>正在加载热点数据...</p></div>';
 
-async function fetchTrendingVideos() {
-  showToast('正在获取热门视频...');
-  const keywords = ['办公室游戏 谁是卧底 爆款', '团建游戏 办公室 搞笑', '你画我猜 办公室 爆笑'];
-  hotVideos = [];
-  for (const kw of keywords) {
-    await searchAndDisplayVideos(kw, 'hotVideoGrid', hotVideos, 'hot');
-  }
-}
-
-// ==================== 办公室游戏热点视频 ====================
-let gameVideos = [];
-
-async function searchGameVideos() {
-  const keyword = document.getElementById('gameSearchInput').value.trim();
-  if (!keyword) {
-    // 默认搜索
-    const defaults = ['谁是卧底 高级玩法', '你画我猜 爆笑', '词语加字 翻车', '办公室团建游戏'];
-    showToast('正在搜索热门游戏视频...');
-    gameVideos = [];
-    for (const kw of defaults) {
-      await searchAndDisplayVideos(kw, 'gameVideoGrid', gameVideos, 'game');
+  const now = Date.now();
+  // 尝试从缓存读取（有效期30分钟）
+  const cacheTime = localStorage.getItem(HOT_VIDEOS_CACHE_TIME_KEY);
+  if (cacheTime && (now - parseInt(cacheTime)) < 30 * 60 * 1000) {
+    const cached = localStorage.getItem(HOT_VIDEOS_CACHE_KEY);
+    if (cached) {
+      try { hotVideos = JSON.parse(cached); renderHotVideoGrid(); return; } catch(e) {}
     }
+  }
+
+  // 从GitHub加载
+  try {
+    const res = await fetch(HOT_VIDEOS_URL + '?t=' + now, { cache: 'no-cache' });
+    if (res.ok) {
+      const data = await res.json();
+      hotVideos = data.videos || data;
+      cacheHotVideos();
+      renderHotVideoGrid();
+      return;
+    }
+  } catch(e) {}
+
+  // 回退到本地
+  try {
+    const res = await fetch(HOT_VIDEOS_LOCAL + '?t=' + now, { cache: 'no-cache' });
+    if (res.ok) {
+      const data = await res.json();
+      hotVideos = data.videos || data;
+      cacheHotVideos();
+      renderHotVideoGrid();
+      return;
+    }
+  } catch(e) {}
+
+  grid.innerHTML = '<div class="empty-state"><div class="icon">🌐</div><p>热点数据加载失败<br><small>请检查网络后点击"刷新热点"</small></p></div>';
+}
+
+function cacheHotVideos() {
+  localStorage.setItem(HOT_VIDEOS_CACHE_KEY, JSON.stringify(hotVideos));
+  localStorage.setItem(HOT_VIDEOS_CACHE_TIME_KEY, Date.now().toString());
+}
+
+async function fetchTrendingUpdate() {
+  showToast('🔄 正在刷新热点数据...');
+  localStorage.removeItem(HOT_VIDEOS_CACHE_KEY);
+  localStorage.removeItem(HOT_VIDEOS_CACHE_TIME_KEY);
+  await loadHotVideos();
+  showToast('✅ 热点数据已更新（共 ' + hotVideos.length + ' 条）');
+}
+
+function searchHotVideos() {
+  const keyword = document.getElementById('hotSearchInput').value.trim().toLowerCase();
+  if (!keyword) { renderHotVideoGrid(); return; }
+  const filtered = hotVideos.filter(v =>
+    v.title.toLowerCase().includes(keyword) ||
+    (v.category || '').toLowerCase().includes(keyword) ||
+    (v.tags || []).some(t => t.toLowerCase().includes(keyword))
+  );
+  renderHotVideoGrid(filtered);
+}
+
+function renderHotVideoGrid(videos) {
+  const grid = document.getElementById('hotVideoGrid');
+  if (!grid) return;
+  const displayVideos = videos || hotVideos;
+
+  if (displayVideos.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><div class="icon">🔥</div><p>暂无热点数据，点击"刷新热点"获取最新内容</p></div>';
     return;
   }
-  showToast('正在搜索...');
-  gameVideos = [];
-  await searchAndDisplayVideos(keyword, 'gameVideoGrid', gameVideos, 'game');
+
+  let filtered = displayVideos;
+  if (hotFilter !== 'all') {
+    filtered = displayVideos.filter(v => v.category === hotFilter);
+  }
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>该分类下暂无视频</p></div>';
+    return;
+  }
+
+  const favs = getFavorites();
+  const favIds = new Set(favs.map(f => f.id));
+
+  grid.innerHTML = filtered.map(v => {
+    const isFaved = favIds.has(v.id);
+    const safeTitle = (v.title || '').replace(/'/g, "\\'");
+    const safePlat = (v.platform || '').replace(/'/g, "\\'");
+    const safeCat = (v.category || '').replace(/'/g, "\\'");
+    const safeViews = (v.views || '0').replace(/'/g, "\\'");
+    const safeLikes = (v.likes || '0').replace(/'/g, "\\'");
+    const safeCreator = (v.creator || '').replace(/'/g, "\\'");
+    const safeUrl = (v.url || '').replace(/'/g, "\\'");
+    const safeTags = (v.tags || []).join(',').replace(/'/g, "\\'");
+    const escapedTitleAttr = safeTitle.replace(/"/g, '&quot;');
+    return '<div class="video-card">' +
+      '<div class="video-thumb" onclick="openVideoSearch(\'' + safePlat + '\',\'' + safeTitle + '\',\'' + safeCat + '\')" style="background:linear-gradient(135deg,' + getGradient(v.category) + ',' + getGradient2(v.category) + ');cursor:pointer;">' +
+      '<div class="play-icon">▶</div>' +
+      '<span class="platform-tag">' + (v.platform || '') + '</span></div>' +
+      '<div class="video-body">' +
+      '<div class="video-title">' + (v.title || '') + '</div>' +
+      '<div class="video-meta"><span>👁️ ' + (v.views || '热播') + '</span><span>❤️ ' + (v.likes || '-') + '</span>' +
+      '<span style="font-size:11px;color:var(--text-secondary)">' + (v.creator ? '@' + v.creator : '') + '</span></div>' +
+      '<div class="video-tags">' + (v.tags || [v.category]).map(function(t) { return '<span class="tag ' + ((t||'').indexOf('卧底')>-1||(t||'').indexOf('爆款')>-1?'hot':'game') + '">' + t + '</span>'; }).join('') + '</div>' +
+      '<div style="margin-top:10px;display:flex;gap:8px;">' +
+      '<button class="btn btn-sm ' + (isFaved ? 'btn-outline' : 'btn-primary') + '" onclick="addToFavorites(\'' + v.id + '\',\'' + escapedTitleAttr + '\',\'' + safePlat + '\',\'' + safeCat + '\',\'' + safeViews + '\',\'' + safeLikes + '\',\'' + safeCreator + '\',\'' + safeUrl + '\',\'' + safeTags + '\')" ' + (isFaved ? 'disabled' : '') + '>' + (isFaved ? '✅ 已收藏' : '⭐ 收藏到素材库') + '</button>' +
+      '</div></div></div>';
+  }).join('');
 }
 
-async function searchAndDisplayVideos(keyword, gridId, store, type) {
-  try {
-    const results = await performWebSearch(keyword);
-    const newVideos = results.map((r, i) => ({
-      id: Date.now() + i,
-      title: r.title || keyword + ' - ' + (i + 1),
-      platform: r.platform || (Math.random() > 0.5 ? '抖音' : '视频号'),
-      views: r.views || formatViews(Math.floor(Math.random() * 500000 + 10000)),
-      likes: r.likes || formatViews(Math.floor(Math.random() * 50000 + 500)),
-      tags: extractTags(keyword, r.title),
-      category: detectCategory(keyword, r.title),
-      url: r.url || '#',
-      source: 'web-search'
-    }));
-    store.push(...newVideos);
-    renderVideoGrid(gridId, store, type);
-    showToast(`找到 ${newVideos.length} 个相关视频`);
-  } catch (e) {
-    console.error('Search error:', e);
-    // Fallback: generate mock data
-    const mockVideos = generateMockVideos(keyword, 6);
-    store.push(...mockVideos);
-    renderVideoGrid(gridId, store, type);
-    showToast(`已展示 ${mockVideos.length} 个热点视频（模拟数据）`);
+// ==================== 收藏夹 ====================
+
+function getFavorites() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.favorites)) || []; }
+  catch(e) { return []; }
+}
+
+function saveFavorites(favs) {
+  localStorage.setItem(STORAGE_KEYS.favorites, JSON.stringify(favs));
+  updateFavBadge();
+}
+
+function addToFavorites(id, title, platform, category, views, likes, creator, url, tagsStr) {
+  const favs = getFavorites();
+  if (favs.find(function(f) { return f.id === id; })) {
+    showToast('该视频已在收藏夹中');
+    return;
+  }
+  var tags = tagsStr ? tagsStr.split(',').map(function(t) { return t.trim(); }).filter(Boolean) : [category];
+  favs.push({
+    id: id, title: title, platform: platform, category: category || '',
+    views: views || '0', likes: likes || '0', creator: creator || '',
+    url: url || '', tags: tags, savedAt: new Date().toISOString()
+  });
+  saveFavorites(favs);
+  showToast('⭐ 已收藏到素材库！');
+  if (document.getElementById('page-hot-push').classList.contains('active')) renderHotVideoGrid();
+}
+
+function removeFavorite(id) {
+  var favs = getFavorites();
+  favs = favs.filter(function(f) { return f.id !== id; });
+  saveFavorites(favs);
+  showToast('🗑️ 已从收藏夹移除');
+  renderFavorites();
+  if (document.getElementById('page-hot-push').classList.contains('active')) renderHotVideoGrid();
+}
+
+function renderFavorites() {
+  var favs = getFavorites();
+  var grid = document.getElementById('favGrid');
+  var countEl = document.getElementById('favCount');
+  if (countEl) countEl.textContent = favs.length;
+  if (!grid) return;
+
+  if (favs.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><div class="icon">⭐</div><p>还没有收藏视频，去「热点推送」发现好内容并收藏吧！</p></div>';
+    return;
+  }
+
+  var sorted = [].concat(favs).sort(function(a, b) { return new Date(b.savedAt) - new Date(a.savedAt); });
+
+  grid.innerHTML = sorted.map(function(v) {
+    var safeTitle = (v.title || '').replace(/'/g, "\\'");
+    var safePlat = (v.platform || '').replace(/'/g, "\\'");
+    var safeCat = (v.category || '').replace(/'/g, "\\'");
+    return '<div class="video-card" style="border-left:3px solid var(--accent);">' +
+      '<div class="video-thumb" onclick="openVideoSearch(\'' + safePlat + '\',\'' + safeTitle + '\',\'' + safeCat + '\')" style="background:linear-gradient(135deg,' + getGradient(v.category) + ',' + getGradient2(v.category) + ');cursor:pointer;">' +
+      '<div class="play-icon">▶</div>' +
+      '<span class="platform-tag">' + (v.platform || '') + '</span>' +
+      '<span style="position:absolute;top:8px;right:8px;background:var(--accent);color:#fff;padding:2px 8px;border-radius:10px;font-size:10px;">已收藏</span></div>' +
+      '<div class="video-body">' +
+      '<div class="video-title">' + (v.title || '') + '</div>' +
+      '<div class="video-meta"><span>👁️ ' + (v.views || '0') + '</span><span>❤️ ' + (v.likes || '0') + '</span>' +
+      '<span style="font-size:11px;color:var(--text-secondary)">' + (v.creator ? '@' + v.creator : '') + '</span></div>' +
+      '<div class="video-tags">' + (v.tags || []).map(function(t) { return '<span class="tag ' + ((t||'').indexOf('卧底')>-1?'hot':'game') + '">' + t + '</span>'; }).join('') +
+      '<span class="tag" style="background:#dfe6e9;color:#636e72;">' + formatRelativeTime(v.savedAt) + '</span></div>' +
+      '<div style="margin-top:10px;display:flex;gap:8px;">' +
+      '<button class="btn btn-sm btn-outline" onclick="markForRemix(\'' + safeTitle + '\')">📌 二创标记</button>' +
+      '<button class="btn btn-sm" onclick="removeFavorite(\'' + v.id + '\')" style="background:var(--danger);color:#fff;border:none;">🗑 移除</button>' +
+      '</div></div></div>';
+  }).join('');
+}
+
+function exportFavorites() {
+  var favs = getFavorites();
+  if (favs.length === 0) { showToast('收藏夹为空，无法导出'); return; }
+  var text = favs.map(function(v, i) {
+    return (i+1) + '. [' + v.platform + '] ' + v.title + ' | 分类：' + v.category + ' | 播放：' + v.views + ' | 点赞：' + v.likes + ' | 收藏时间：' + new Date(v.savedAt).toLocaleString('zh-CN');
+  }).join('\n');
+  var blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '收藏素材_' + new Date().toISOString().slice(0,10) + '.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('✅ 素材列表已导出');
+}
+
+function updateFavBadge() {
+  var badge = document.getElementById('favBadge');
+  var count = getFavorites().length;
+  if (!badge) {
+    var favNav = document.querySelector('[data-page="favorites"]');
+    if (favNav) {
+      badge = document.createElement('span');
+      badge.id = 'favBadge';
+      badge.style.cssText = 'display:inline-block;background:var(--accent);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;margin-left:6px;min-width:18px;text-align:center;';
+      favNav.appendChild(badge);
+    }
+  }
+  if (badge) {
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'inline-block' : 'none';
   }
 }
 
-async function performWebSearch(query) {
-  const fullQuery = query + ' 抖音 视频号 2025 2026';
-  // Using built-in WebSearch
-  const results = [];
-  // Generate enriched results based on the query
-  const games = ['谁是卧底', '你画我猜', '词语加字', '狼人杀', '海龟汤', '真心话大冒险', '谁是卧底升级版'];
-  const platforms = ['抖音', '视频号', '小红书'];
-
-  const count = 6;
-  for (let i = 0; i < count; i++) {
-    const game = games[Math.floor(Math.random() * games.length)];
-    const platform = platforms[Math.floor(Math.random() * platforms.length)];
-    const titles = [
-      `【${game}】办公室玩疯了！这个版本太刺激了`,
-      `办公室团建必玩${game}，同事笑到停不下来`,
-      `${game}高手过招，办公室秒变综艺现场`,
-      `爆笑${game}！办公室版玩法升级，全程高能`,
-      `打工人摸鱼玩${game}，老板进来一起玩`,
-      `${game}办公室版，这波操作太骚了`,
-      `${game}还能这样玩？办公室游戏天花板`,
-      `同事聚会玩${game}，笑到肚子疼`,
-    ];
-    results.push({
-      title: titles[Math.floor(Math.random() * titles.length)],
-      platform,
-      views: formatViews(Math.floor(Math.random() * 500000 + 10000)),
-      likes: formatViews(Math.floor(Math.random() * 50000 + 500)),
-      tags: [game, platform, '办公室游戏', '团建'],
-    });
-  }
-  return results;
+function formatRelativeTime(isoStr) {
+  var diff = Date.now() - new Date(isoStr).getTime();
+  var mins = Math.floor(diff / 60000);
+  if (mins < 60) return mins + '分钟前';
+  var hours = Math.floor(mins / 60);
+  if (hours < 24) return hours + '小时前';
+  var days = Math.floor(hours / 24);
+  if (days < 30) return days + '天前';
+  return Math.floor(days / 30) + '个月前';
 }
 
 function formatViews(n) {
   if (n >= 10000) return (n / 10000).toFixed(1) + '万';
   return n.toString();
-}
-
-function extractTags(keyword, title) {
-  const tags = [];
-  const gameNames = ['谁是卧底', '你画我猜', '词语加字', '狼人杀', '海龟汤', '办公室游戏', '团建'];
-  gameNames.forEach(g => {
-    if ((keyword + (title || '')).includes(g)) tags.push(g);
-  });
-  if (tags.length === 0) tags.push('办公室游戏');
-  return [...new Set(tags)];
-}
-
-function detectCategory(keyword, title) {
-  const text = keyword + (title || '');
-  if (text.includes('谁是卧底')) return '谁是卧底';
-  if (text.includes('你画我猜')) return '你画我猜';
-  if (text.includes('词语加字')) return '词语加字';
-  if (text.includes('团建')) return '团建游戏';
-  return '办公室搞笑';
-}
-
-function generateMockVideos(keyword, count) {
-  const vids = [];
-  const platforms = ['抖音', '视频号', '小红书'];
-  const games = ['谁是卧底', '你画我猜', '词语加字', '狼人杀', '海龟汤'];
-  for (let i = 0; i < count; i++) {
-    const game = games[i % games.length];
-    const titles = [
-      `【${game}】办公室玩疯了！`,
-      `办公室团建${game}爆笑现场`,
-      `${game}还能这样玩？全程高能`,
-      `打工人摸鱼玩${game}，老板也加入`,
-    ];
-    vids.push({
-      id: Date.now() + Math.random(),
-      title: titles[i % titles.length],
-      platform: platforms[i % platforms.length],
-      views: formatViews(Math.floor(Math.random() * 800000 + 50000)),
-      likes: formatViews(Math.floor(Math.random() * 80000 + 1000)),
-      tags: [game, '办公室游戏'],
-      category: game,
-      url: '#',
-      source: 'mock'
-    });
-  }
-  return vids;
 }
 
 function renderVideoGrid(gridId, videos, type) {
@@ -1565,7 +1730,7 @@ function renderVideoGrid(gridId, videos, type) {
 
   grid.innerHTML = displayVideos.map(v => `
     <div class="video-card">
-      <div class="video-thumb" style="background: linear-gradient(135deg, ${getGradient(v.category)}, ${getGradient2(v.category)});">
+      <div class="video-thumb" onclick="openVideoSearch('${v.platform.replace(/'/g, '\\\'')}', '${v.title.replace(/'/g, '\\\'')}', '${v.category.replace(/'/g, '\\\'') || ''}')" style="background: linear-gradient(135deg, ${getGradient(v.category)}, ${getGradient2(v.category)}); cursor: pointer;">
         <div class="play-icon">▶</div>
         <span class="platform-tag">${v.platform}</span>
       </div>
@@ -1597,6 +1762,21 @@ function getGradient2(cat) {
 
 function markForRemix(title) {
   showToast('📌 已标记为二创参考：「' + title.substring(0, 20) + '...」');
+}
+
+function openVideoSearch(platform, title, category) {
+  const keyword = encodeURIComponent(title + ' ' + (category || ''));
+  const gameKw = encodeURIComponent(category ? (category + ' 办公室游戏') : title);
+  let url;
+  if (platform === '抖音') {
+    url = 'https://www.douyin.com/search/' + keyword;
+  } else if (platform === '小红书') {
+    url = 'https://www.xiaohongshu.com/search_result?keyword=' + keyword;
+  } else {
+    // 视频号没有直接网页搜索，跳转抖音同类搜索
+    url = 'https://www.douyin.com/search/' + gameKw;
+  }
+  window.open(url, '_blank');
 }
 
 // Hot video filter chips
@@ -2076,8 +2256,8 @@ function init() {
   renderIdeas();
   renderReviews();
   renderAccounts();
-  renderVideoGrid('hotVideoGrid', hotVideos, 'hot');
-  renderVideoGrid('gameVideoGrid', gameVideos, 'game');
+  loadHotVideos();
+  updateFavBadge();
 
   // Check daily popup (delay slightly)
   setTimeout(checkDailyPopup, 800);
@@ -2093,9 +2273,168 @@ document.getElementById('accAmount').addEventListener('keydown', e => {
 document.getElementById('hotSearchInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') searchHotVideos();
 });
-document.getElementById('gameSearchInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') searchGameVideos();
+
+// ==================== 云同步 ====================
+const SYNC_CONFIG = {
+  owner: 'guanlulu66',
+  repo: 'office-game-workbench',
+  branch: 'main',
+  filePath: 'sync-data.json'
+};
+
+function getSyncToken() { return localStorage.getItem('wb_sync_token') || ''; }
+function setSyncToken(t) { localStorage.setItem('wb_sync_token', t); }
+function getSyncTime() { return localStorage.getItem('wb_sync_time') || ''; }
+function setSyncTime(t) { localStorage.setItem('wb_sync_time', t); }
+
+function updateSyncBadge() {
+  const badge = document.getElementById('syncBadge');
+  const lastTime = getSyncTime();
+  if (lastTime) {
+    badge.className = 'sync-badge synced';
+    document.getElementById('syncLastTime').textContent = '上次同步：' + lastTime;
+  } else {
+    badge.className = 'sync-badge unsynced';
+    document.getElementById('syncLastTime').textContent = '尚未同步过';
+  }
+}
+
+function showSyncModal() {
+  document.getElementById('syncToken').value = getSyncToken();
+  document.getElementById('syncStatus').textContent = '';
+  document.getElementById('syncStatus').className = 'sync-status';
+  updateSyncBadge();
+  document.getElementById('syncModal').style.display = 'flex';
+}
+
+function closeSyncModal() {
+  const token = document.getElementById('syncToken').value.trim();
+  if (token) setSyncToken(token);
+  document.getElementById('syncModal').style.display = 'none';
+}
+
+document.getElementById('syncNavBtn').addEventListener('click', showSyncModal);
+document.getElementById('syncModal').addEventListener('click', function(e) {
+  if (e.target === this) closeSyncModal();
 });
+
+function apiRequest(method, apiPath, token, body) {
+  return new Promise((resolve, reject) => {
+    const data = body ? JSON.stringify(body) : null;
+    const req = new XMLHttpRequest();
+    req.open(method, 'https://api.github.com' + apiPath);
+    req.setRequestHeader('Authorization', 'token ' + token);
+    req.setRequestHeader('Accept', 'application/vnd.github+json');
+    req.setRequestHeader('User-Agent', 'WorkBuddy');
+    if (data) req.setRequestHeader('Content-Type', 'application/json');
+    req.onload = () => {
+      try { resolve({ status: req.status, body: JSON.parse(req.responseText) }); }
+      catch { resolve({ status: req.status, body: req.responseText }); }
+    };
+    req.onerror = () => reject(new Error('Network error'));
+    req.send(data);
+  });
+}
+
+async function syncUpload() {
+  const token = document.getElementById('syncToken').value.trim();
+  if (!token) { showSyncError('请先输入 GitHub Token'); return; }
+  setSyncToken(token);
+
+  const btn = document.getElementById('btnUpload');
+  btn.disabled = true;
+  btn.textContent = '⏳ 上传中...';
+
+  try {
+    const allData = {};
+    Object.entries(STORAGE_KEYS).forEach(([key, storageKey]) => {
+      const val = localStorage.getItem(storageKey);
+      if (val !== null) allData[storageKey] = val;
+    });
+
+    const content = JSON.stringify({ data: allData, syncedAt: new Date().toISOString() });
+
+    // Get existing file SHA if exists
+    let sha = '';
+    try {
+      const getRes = await apiRequest('GET', '/repos/' + SYNC_CONFIG.owner + '/' + SYNC_CONFIG.repo + '/contents/' + SYNC_CONFIG.filePath + '?ref=' + SYNC_CONFIG.branch, token);
+      if (getRes.status === 200 && getRes.body.sha) sha = getRes.body.sha;
+    } catch(e) {}
+
+    const putBody = {
+      message: 'Cloud sync: ' + new Date().toLocaleString('zh-CN'),
+      content: btoa(unescape(encodeURIComponent(content))),
+      branch: SYNC_CONFIG.branch
+    };
+    if (sha) putBody.sha = sha;
+
+    const res = await apiRequest('PUT', '/repos/' + SYNC_CONFIG.owner + '/' + SYNC_CONFIG.repo + '/contents/' + SYNC_CONFIG.filePath, token, putBody);
+
+    if (res.status === 201 || res.status === 200) {
+      const now = new Date().toLocaleString('zh-CN');
+      setSyncTime(now);
+      updateSyncBadge();
+      showSyncSuccess('✅ 数据已上传到云端 (' + now + ')');
+    } else {
+      showSyncError('上传失败: ' + (res.body.message || res.status));
+    }
+  } catch(e) {
+    showSyncError('网络错误: ' + e.message);
+  }
+  btn.disabled = false;
+  btn.textContent = '⬆ 上传到云端';
+}
+
+async function syncDownload() {
+  const token = document.getElementById('syncToken').value.trim();
+  if (!token) { showSyncError('请先输入 GitHub Token'); return; }
+  setSyncToken(token);
+
+  const btn = document.getElementById('btnDownload');
+  btn.disabled = true;
+  btn.textContent = '⏳ 拉取中...';
+
+  try {
+    const res = await apiRequest('GET', '/repos/' + SYNC_CONFIG.owner + '/' + SYNC_CONFIG.repo + '/contents/' + SYNC_CONFIG.filePath + '?ref=' + SYNC_CONFIG.branch, token);
+
+    if (res.status === 200 && res.body.content) {
+      const decoded = JSON.parse(decodeURIComponent(escape(atob(res.body.content.replace(/\s/g, '')))));
+      if (decoded.data) {
+        Object.entries(decoded.data).forEach(([key, val]) => {
+          localStorage.setItem(key, val);
+        });
+        const syncTime = decoded.syncedAt ? new Date(decoded.syncedAt).toLocaleString('zh-CN') : new Date().toLocaleString('zh-CN');
+        setSyncTime(syncTime);
+        updateSyncBadge();
+        showSyncSuccess('✅ 数据已从云端拉取 (' + syncTime + ')，页面即将刷新...');
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        showSyncError('云端数据格式错误');
+      }
+    } else if (res.status === 404) {
+      showSyncError('云端暂无数据，请先上传');
+    } else {
+      showSyncError('拉取失败: ' + (res.body.message || res.status));
+    }
+  } catch(e) {
+    showSyncError('网络错误: ' + e.message);
+  }
+  btn.disabled = false;
+  btn.textContent = '⬇ 从云端拉取';
+}
+
+function showSyncSuccess(msg) {
+  const el = document.getElementById('syncStatus');
+  el.textContent = msg;
+  el.className = 'sync-status success';
+}
+function showSyncError(msg) {
+  const el = document.getElementById('syncStatus');
+  el.textContent = msg;
+  el.className = 'sync-status error';
+}
+
+updateSyncBadge();
 
 init();
 
