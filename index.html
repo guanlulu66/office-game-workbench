@@ -1580,7 +1580,7 @@ function renderHotVideoGrid(videos) {
     const safeTags = (v.tags || []).join(',').replace(/'/g, "\\'");
     const escapedTitleAttr = safeTitle.replace(/"/g, '&quot;');
     return '<div class="video-card">' +
-      '<div class="video-thumb" onclick="openVideoSearch(\'' + safePlat + '\',\'' + safeTitle + '\',\'' + safeCat + '\')" style="background:linear-gradient(135deg,' + getGradient(v.category) + ',' + getGradient2(v.category) + ');cursor:pointer;">' +
+      '<div class="video-thumb" onclick="openVideoSearch(\'' + safePlat + '\',\'' + safeTitle + '\',\'' + safeCat + '\',\'' + safeUrl + '\')" style="background:linear-gradient(135deg,' + getGradient(v.category) + ',' + getGradient2(v.category) + ');cursor:pointer;">' +
       '<div class="play-icon">▶</div>' +
       '<span class="platform-tag">' + (v.platform || '') + '</span></div>' +
       '<div class="video-body">' +
@@ -1650,8 +1650,9 @@ function renderFavorites() {
     var safeTitle = (v.title || '').replace(/'/g, "\\'");
     var safePlat = (v.platform || '').replace(/'/g, "\\'");
     var safeCat = (v.category || '').replace(/'/g, "\\'");
+    var safeUrl = (v.url || '').replace(/'/g, "\\'");
     return '<div class="video-card" style="border-left:3px solid var(--accent);">' +
-      '<div class="video-thumb" onclick="openVideoSearch(\'' + safePlat + '\',\'' + safeTitle + '\',\'' + safeCat + '\')" style="background:linear-gradient(135deg,' + getGradient(v.category) + ',' + getGradient2(v.category) + ');cursor:pointer;">' +
+      '<div class="video-thumb" onclick="openVideoSearch(\'' + safePlat + '\',\'' + safeTitle + '\',\'' + safeCat + '\',\'' + safeUrl + '\')" style="background:linear-gradient(135deg,' + getGradient(v.category) + ',' + getGradient2(v.category) + ');cursor:pointer;">' +
       '<div class="play-icon">▶</div>' +
       '<span class="platform-tag">' + (v.platform || '') + '</span>' +
       '<span style="position:absolute;top:8px;right:8px;background:var(--accent);color:#fff;padding:2px 8px;border-radius:10px;font-size:10px;">已收藏</span></div>' +
@@ -1764,7 +1765,12 @@ function markForRemix(title) {
   showToast('📌 已标记为二创参考：「' + title.substring(0, 20) + '...」');
 }
 
-function openVideoSearch(platform, title, category) {
+function openVideoSearch(platform, title, category, videoUrl) {
+  // 有直接链接就用直接链接
+  if (videoUrl) {
+    window.open(videoUrl, '_blank');
+    return;
+  }
   const keyword = encodeURIComponent(title + ' ' + (category || ''));
   const gameKw = encodeURIComponent(category ? (category + ' 办公室游戏') : title);
   let url;
